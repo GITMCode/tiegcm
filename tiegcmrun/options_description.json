@@ -10,11 +10,19 @@
             "warning": null
         },
         "hpc_system": {
-            "LEVEL": "BENCH",
+            "LEVEL": "EXPERT",
             "prompt": "Name of HPC system",
             "default": "derecho",
             "valids": ["derecho", "aitken","linux"],
-            "description": null,
+            "description": "Auto-detected from the hostname; override only if the detected value is wrong (e.g. running from a non-standard login node).",
+            "warning": null
+        },
+        "compiler": {
+            "LEVEL": "BENCH",
+            "prompt": "Fortran compiler",
+            "default": "intel",
+            "valids": ["intel", "gnu"],
+            "description": "Selects which Make.* fragment to use. 'intel' uses ifort; 'gnu' uses gfortran. Only 'intel' is supported on derecho/aitken.",
             "warning": null
         }
     },

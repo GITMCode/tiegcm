@@ -28,10 +28,9 @@ DBGFLAGS += -Wuse-without-only -Walign-commons -Wrealloc-lhs -Wrealloc-lhs-all
 OPTIM    = -O2
 HOST     = $(shell hostname)
 #
-# Library and Include file paths:
-#
-# ESMF lib on palmetto:
-# (Makefile does "include $(ESMFMKFILE)")
+# ESMFMKFILE (path to esmf.mk) must be set in the environment before build;
+# the top-level Makefile does `include $(ESMFMKFILE)` to pull in ESMF and
+# netCDF paths. Palmetto does not have this module so we use a shared install
 ESMFMKFILE = /project/xianl/luatmos/software/lib/libO/Linux.gfortran.64.openmpi.default/esmf.mk
 #
 # Make machines.ini file for MPI execution:

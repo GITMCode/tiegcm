@@ -25,11 +25,10 @@ DBGFLAGS += -warn all -nogen-interfaces
 OPTIM    = -O2
 HOST     = $(shell hostname)
 #
-# Library and Include file paths:
-#
-# ESMF lib on Pleiades:
-# export ESMFMKFILE=/home6/fvitt/esmf-8_2_0/lib/libO/Linux.intel.64.mpt.default/esmf.mk
+# On Aitken all users use the ESMF install in nrao3's personal directory
 export ESMFMKFILE=/u/nrao3/local_aitken/esmf/lib/libO/Linux.intelgcc.64.mpt.default/esmf.mk
+# This contains the lib/include paths for ESMF & netCDF
+
 #
 # Make machines.ini file for MPI execution:
 #

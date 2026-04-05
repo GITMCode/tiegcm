@@ -554,9 +554,17 @@ def prompt_user_for_run_options(args):
                 od["hpc_system"]["default"] = "derecho"
             else:
                 od["hpc_system"]["default"] = "linux"
-        # Prompt for the parameters.
+        # Prompt for the system name/compiler. 
+        # hpc_system is EXPERT-level: its default is auto-detected from the
+        # hostname above or can be set in expert mode. 
+        # Compiler is not shown on derecho/aitken since only Intel is supported
         for on in ["job_name", "hpc_system"]:
             o[on] = get_run_option(on, od[on], mode, skip_parameters)
+        if o["hpc_system"] in ("derecho", "aitken"):
+            o["compiler"] = "intel"
+        else:
+            od["compiler"]["default"] = "gnu"
+            o["compiler"] = get_run_option("compiler", od["compiler"], mode, skip_parameters)
     #-------------------------------------------------------------------------
 
     # Model options
@@ -609,12 +617,20 @@ def prompt_user_for_run_options(args):
     o["log_file"] = get_run_option("log_file", od["log_file"], mode, skip_parameters)
 
     if od["make"]["default"] == None:
-        if options["simulation"]["hpc_system"] == "derecho":
-            od["make"]["default"] = os.path.join(options["model"]["data"]["modeldir"],'scripts/Make.intel_de')
-        elif options["simulation"]["hpc_system"] == "aitken":
-            od["make"]["default"] = os.path.join(options["model"]["data"]["modeldir"],'scripts/Make.intel_at')
-        elif options["simulation"]["hpc_system"] == "linux":
-            od["make"]["default"] = os.path.join(options["model"]["data"]["modeldir"],'scripts/Make.intel_linux')
+        hpc = options["simulation"]["hpc_system"]
+        compiler = options["simulation"].get("compiler", "intel")
+        # Map (hpc_system, compiler) -> Make.* fragment.
+        make_map = {
+            ("derecho", "intel"): "scripts/Make.intel_de",
+            ("aitken",  "intel"): "scripts/Make.intel_at",
+            ("linux",   "intel"): "scripts/Make.intel_linux",
+            ("linux",   "gnu"):   "scripts/Make.gfort_linux",
+        }
+        make_rel = make_map.get((hpc, compiler))
+        if make_rel is None:
+            exit(f"Unsupported (hpc_system, compiler) combination: ({hpc!r}, {compiler!r}). "
+                 f"GNU/gfortran is only wired up for hpc_system='linux'.")
+        od["make"]["default"] = os.path.join(options["model"]["data"]["modeldir"], make_rel)
     o["make"] = get_run_option("make", od["make"], mode, skip_parameters)
     od["modelexe"]["default"] = os.path.join(o["execdir"],"tiegcm.exe")
     o["modelexe"] = get_run_option("modelexe", od["modelexe"], mode, skip_parameters)

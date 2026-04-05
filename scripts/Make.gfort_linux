@@ -1,23 +1,25 @@
 #
-# Included makefile for Intel ifort compiler with openmpi on 64-bit Linux machines.
+# Included makefile for GNU gfortran compiler with MPI on 64-bit Linux machines.
 #
-MPIF90 = mpif90
+MPIF90 = mpifort
 MPIRUN = mpirun
-FFLAGS = -r8 -DINTEL
+FFLAGS = -fdefault-real-8 -DGNU
 #
 #FFLAGS += -mcmodel=medium
 #
 # DBGFLAGS are used by the Makefile only if the job script
 # has "set debug = true"
 #
-DBGFLAGS = -debug full,extended -traceback
-DBGFLAGS += -check all,noarg_temp_created -fp-stack-check
-DBGFLAGS += -warn all -nogen-interfaces
+DBGFLAGS = -Og -fcheck=all,no-array-temps -fbacktrace
+DBGFLAGS += -Wall -Wextra
+DBGFLAGS += -Wpedantic -Wcharacter-truncation -Wconversion-extra
+DBGFLAGS += -Wfrontend-loop-interchange -Wimplicit-interface -Wimplicit-procedure
+DBGFLAGS += -Wuse-without-only -Walign-commons -Wrealloc-lhs -Wrealloc-lhs-all
 #
-# -fpe-all=0 traps all floating point exceptions.
+# -ffpe-trap=invalid,zero,overflow traps all floating point exceptions.
 # The model is not guaranteed not to crash if this option is set.
 #
-#DBGFLAGS += -fpe-all=0
+#DBGFLAGS += -ffpe-trap=invalid,zero,overflow
 #
 # Makefile will use OPTIM = -g if set debug=TRUE in job script.
 OPTIM    = -O2

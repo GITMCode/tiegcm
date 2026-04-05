@@ -25,10 +25,9 @@ DBGFLAGS += -warn all -nogen-interfaces
 OPTIM    = -O2
 HOST     = $(shell hostname)
 #
-# Library and Include file paths:
-#
-# ESMF lib on derecho:
-# (tiegcm-de.job does "module load esmf")
+# ESMFMKFILE (path to esmf.mk) must be set in the environment before build;
+# the top-level Makefile does `include $(ESMFMKFILE)` to pull in ESMF and
+# netCDF paths. On Derecho this is autmoatic in job scripts & setEnvironment.sh
 #
 # Make machines.ini file for MPI execution:
 #
