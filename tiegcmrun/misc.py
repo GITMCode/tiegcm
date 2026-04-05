@@ -9,7 +9,7 @@ Functions included:
 - segment_time(start_time_str, stop_time_str, interval_array): Generates a list of time intervals between a start and stop time.
 - valid_bench(value): Validates the benchmark option.
 - resolution_solver(horires, engage_options=None): Determines vertical resolution, model resolution, grid resolution, and step size based on horizontal resolution.
-- select_source_defaults(options, option_descriptions): Selects default values for the 'source' option based on input options.
+- select_source_defaults(options, option_descriptions, TIEGCMDATA): Selects default values for the 'source' option based on input options.
 - select_resource_defaults(options, option_descriptions): Selects default values for 'select', 'ncpus', and 'mpiprocs' options based on input options.
 - find_file(pattern, path): Finds a file in the specified path that matches the given pattern.
 - time_to_dhms(time_str): Converts a time string to a list of day, hour, minute, and second.
@@ -20,13 +20,8 @@ import os
 import fnmatch
 import argparse
 from datetime import datetime, timedelta
-import xarray as xr
 from numpy import pad
 
-# Path to current tiegcm datafiles
-TIEGCMDATA = os.environ["TIEGCMDATA"]
-# Path to current tiegcm installation
-TIEGCMHOME = os.environ["TIEGCMHOME"]
 
 def get_mtime(file_path):
     """
@@ -38,6 +33,7 @@ def get_mtime(file_path):
     Returns:
     list: A list containing the 'mtime' data, padded with zeros if necessary.
     """
+    import xarray as xr
     ds = xr.open_dataset(file_path)
     if 'mtime' in ds.variables:
         mtime_data = ds['mtime'].values
@@ -152,7 +148,7 @@ def resolution_solver(horires, engage_options=None):
     
     return vertres, mres, nres_grid, STEP
 
-def select_source_defaults(options, option_descriptions):
+def select_source_defaults(options, option_descriptions, TIEGCMDATA):
     """
     Select the default values for the 'source' option based on the given input options.
 

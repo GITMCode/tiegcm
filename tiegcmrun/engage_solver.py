@@ -8,7 +8,7 @@ Functions included:
 - gamres_to_res(gamres): Converts the GAMERA grid type to horizontal resolution values.
 - engage_parser(engage_parameters): Parses the engage.json file and returns the options dictionary.
 - get_engage_start_time(datetime_str, seconds): Calculates the start time for the Engage run by subtracting the spin-up time from the coupled start date.
-- engage_run(options, debug, coupling, engage): Prepares and runs the TIEGCM model in both standalone and coupled modes, generating the necessary input and PBS files.
+- engage_run(options, debug, coupling, engage, TIEGCMDATA, TIEGCMHOME): Prepares and runs the TIEGCM model in both standalone and coupled modes, generating the necessary input and PBS files.
 """
 
 import os
@@ -21,14 +21,6 @@ from output_solver import segment_inp_pbs
 from interpolation import interpic
 from namelist_solver import inp_pri_date
 
-
-# Path to current tiegcm datafiles
-TIEGCMDATA = os.environ["TIEGCMDATA"]
-# Path to current tiegcm installation
-TIEGCMHOME = os.environ["TIEGCMHOME"]
-# Path to directory containing support files for makeitso.
-SUPPORT_FILES_DIRECTORY = os.path.join(TIEGCMHOME, "tiegcmrun")
-OPTION_DESCRIPTIONS_FILE = os.path.join(SUPPORT_FILES_DIRECTORY, "options_description.json")
 
 def gamres_to_res(gamres):
     "D", "Q", "O", "H"
@@ -125,7 +117,7 @@ def engage_parser(engage_parameters):
     
     return engage_options
 
-def engage_options_updater(options, engage_options, option_descriptions):
+def engage_options_updater(options, engage_options, option_descriptions, TIEGCMDATA):
     # General options for the simulation
     o = options["simulation"] 
     o["job_name"] = engage_options["job_name"]
@@ -160,7 +152,7 @@ def engage_options_updater(options, engage_options, option_descriptions):
     options_temp = copy.deepcopy(options)
     if o.get("SOURCE") is None:
         print("No SOURCE file specified, creating a new one.")
-        o["SOURCE"] = select_source_defaults(options_temp, option_descriptions)  
+        o["SOURCE"] = select_source_defaults(options_temp, option_descriptions, TIEGCMDATA)
         """
         if not os.path.isfile(f'{options["model"]["data"]["workdir"]}/tiegcm_standalone/{run_name}-tiegcm-standalone_temp.nc'):
             in_prim = source
@@ -238,7 +230,10 @@ def get_engage_start_time(datetime_str, seconds):
     # Return the new datetime as a string in the same format
     return new_dt.isoformat()
 
-def engage_run(options, debug, coupling, engage):
+def engage_run(options, debug, coupling, engage, TIEGCMDATA, TIEGCMHOME):
+
+    OPTION_DESCRIPTIONS_FILE = os.path.join(TIEGCMHOME, "tiegcmrun", 
+                                            "options_description.json")
     with open(OPTION_DESCRIPTIONS_FILE, "r", encoding="utf-8") as f:
         option_descriptions = json.load(f)
     options_standalone = copy.deepcopy(options)
@@ -287,8 +282,10 @@ def engage_run(options, debug, coupling, engage):
     options_standalone["inp"]["SOURCE"] = out_prim
     horires_standalone= engage["horires"]
     vertres_standalone, mres_standalone, nres_grid_standalone, STEP_standalone = resolution_solver(horires_standalone,engage)
-    interpic (in_prim,float(horires_standalone),float(vertres_standalone),float(options_standalone['model']['specification']['zitop']),out_prim)    
-    standalone_inp_files,standalone_pbs_files, standalone_log_files,pristart_times, pristop_times=segment_inp_pbs(options_standalone, options_standalone["simulation"]["job_name"],pbs, engage)
+    interpic(in_prim,float(horires_standalone),float(vertres_standalone),
+             float(options_standalone['model']['specification']['zitop']),out_prim)    
+    standalone_inp_files,standalone_pbs_files, standalone_log_files,pristart_times, pristop_times=segment_inp_pbs(
+        options_standalone, options_standalone["simulation"]["job_name"], pbs, TIEGCMHOME, engage)
     #For coupled
     pbs=False
     options_coupling["model"]["data"]["modelexe"] = options_coupling["model"]["data"]["coupled_modelexe"]
@@ -327,7 +324,8 @@ def engage_run(options, debug, coupling, engage):
     options_coupling["inp"]["GSWM_MI_SDI_NCFILE"] = find_file(f'*gswm_semi_{horires_coupling}d_99km*', TIEGCMDATA)
     options_coupling["inp"]["GSWM_NM_DI_NCFILE"] = find_file(f'*gswm_nonmig_diurn_{horires_coupling}d_99km*', TIEGCMDATA)
     options_coupling["inp"]["GSWM_NM_SDI_NCFILE"] = find_file(f'*gswm_nonmig_semi_{horires_coupling}d_99km*', TIEGCMDATA)
-    coupling_inp_files,coupling_pbs_files, coupling_log_files, pristart_times, pristop_times = segment_inp_pbs(options_coupling, options_coupling["simulation"]["job_name"],pbs, engage)
+    coupling_inp_files,coupling_pbs_files, coupling_log_files, pristart_times, pristop_times = segment_inp_pbs(
+        options_coupling, options_coupling["simulation"]["job_name"], pbs, TIEGCMHOME, engage)
     select_coupling,ncpus_coupling,mpiprocs_coupling=select_resource_defaults(options_coupling,option_descriptions)
     options_coupling["job"]["resource"]["select"] = select_coupling
     options_coupling["job"]["resource"]["ncpus"] = ncpus_coupling

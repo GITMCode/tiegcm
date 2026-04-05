@@ -775,7 +775,7 @@ def prompt_user_for_run_options(args):
                 o[on] = get_run_option(on, od[on], temp_mode, skip_parameters)
             elif on == "SOURCE":
                 if benchmark == None:
-                    od["SOURCE"]["default"] = select_source_defaults(options, option_descriptions)    
+                    od["SOURCE"]["default"] = select_source_defaults(options, option_descriptions, TIEGCMDATA)
                 o[on] = get_run_option(on, od[on], temp_mode, skip_parameters)
                 if o[on] == None:
                     o[on] = get_run_option(on, od[on], "BASIC")
@@ -799,7 +799,7 @@ def prompt_user_for_run_options(args):
                 o[on] = get_run_option(on, od[on], temp_mode, skip_parameters)
                 MXHIST_PRIM = int(o[on])
             elif on == "OUTPUT" and benchmark== None:
-                OUTPUT, pri_files_n = inp_pri_out(o["start_time"], o["stop_time"], PRIHIST, MXHIST_PRIM, 0, histdir,run_name)
+                OUTPUT, _ = inp_pri_out(o["start_time"], o["stop_time"], PRIHIST, MXHIST_PRIM, 0, histdir,run_name)
                 od["OUTPUT"]["default"] = OUTPUT
                 o[on] = get_run_option(on, od[on], temp_mode, skip_parameters)
             elif on == "SECHIST" and benchmark== None:
@@ -817,7 +817,7 @@ def prompt_user_for_run_options(args):
                 o[on] = get_run_option(on, od[on], temp_mode, skip_parameters)
                 MXHIST_SECH = int(o[on])
             elif on == "SECOUT" and benchmark== None:
-                SECOUT, sec_files_n = inp_sec_out(o["secondary_start_time"], o["secondary_stop_time"],  SECHIST, MXHIST_SECH, 0, histdir,run_name)
+                SECOUT, _ = inp_sec_out(o["secondary_start_time"], o["secondary_stop_time"],  SECHIST, MXHIST_SECH, 0, histdir,run_name)
                 od["SECOUT"]["default"] = SECOUT
                 o[on] = get_run_option(on, od[on], temp_mode, skip_parameters)
             elif on == "POTENTIAL_MODEL":
@@ -940,7 +940,6 @@ def prompt_user_for_run_options(args):
                         nnodes = ot[ont]
                     elif ont == "ncpus":
                         ot[ont] = get_run_option(ont, odt[ont], mode, skip_parameters)
-                        ncpus = ot[ont]
                     elif ont == "mpiprocs":
                         ot[ont] = get_run_option(ont, odt[ont], mode, skip_parameters)
                         mpiprocs = ot[ont]
@@ -979,7 +978,6 @@ def tiegcmrun(args=None):
     clobber = args.clobber
     debug = args.debug
     options_path = args.options_path
-    verbose = args.verbose
     coupling = args.coupling
     hidra = args.hidra
     compile = args.compile
@@ -1026,7 +1024,7 @@ def tiegcmrun(args=None):
         if engage != None:
             with open(OPTION_DESCRIPTIONS_FILE, "r", encoding="utf-8") as f:
                 option_descriptions = json.load(f)
-            options = engage_options_updater(options, args.engage, option_descriptions)
+            options = engage_options_updater(options, args.engage, option_descriptions, TIEGCMDATA)
     else:
         # Prompt the user for the run options.
         options = prompt_user_for_run_options(args)
@@ -1053,7 +1051,6 @@ def tiegcmrun(args=None):
     # Save the options dictionary as a JSON file in the current directory.
     json_path = f"{workdir}/{run_name}.json"
     
-    tiegcmdata = options["model"]["data"]["tgcmdata"]
     horires = options["model"]["specification"]["horires"]
     vertres = options["model"]["specification"]["vertres"]
     zitop = options["model"]["specification"]["zitop"]
@@ -1065,7 +1062,7 @@ def tiegcmrun(args=None):
     if args.onlycompile == True:
         compile_tiegcm(options, debug, coupling, hidra)
     elif args.engage != None:
-        options_coupling,standalone_pbs_files,coupling_inp_files = engage_run(options, debug, coupling, args.engage)
+        options_coupling,standalone_pbs_files,coupling_inp_files = engage_run(options, debug, coupling, args.engage, TIEGCMDATA, TIEGCMHOME)
         return (options_coupling,standalone_pbs_files,coupling_inp_files)
     else:
         if args.compile == True:
@@ -1104,9 +1101,8 @@ def tiegcmrun(args=None):
                 out_prim = f'{options["model"]["data"]["workdir"]}/{run_name}_prim.nc'
                 options["inp"]["SOURCE"] = out_prim
                 print(f'{options["model"]["data"]["workdir"]}/{run_name}_prim.nc exists')
-            inp_files, pbs_files,log_files, pristart_times, pristop_times = segment_inp_pbs(options, run_name, pbs=True)
+            inp_files, pbs_files, _, _, _ = segment_inp_pbs(options, run_name, True, TIEGCMHOME)
             init_inp = inp_files[0]    
-            init_pbs = pbs_files[0]
             options["model"]["data"]["input_file"] = init_inp
 
             # Create a single script which will submit all of the PBS jobs in order.

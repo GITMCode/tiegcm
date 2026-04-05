@@ -7,7 +7,7 @@ Functions included:
 
 - create_pbs_scripts(options, run_name, segment_number): Creates PBS scripts for running the TIEGCM model.
 - create_inp_scripts(options, run_name, segment_number): Creates input scripts for running the TIEGCM model.
-- segment_inp_pbs(options, run_name, pbs, engage_options=None): Segments the input and PBS scripts based on the provided options and time segments.
+- segment_inp_pbs(options, run_name, pbs, TIEGCMHOME, engage_options=None): Segments the input and PBS scripts based on the provided options and time segments.
 """
 
 
@@ -22,18 +22,7 @@ from namelist_solver import inp_pri_date, inp_pri_out, inp_sec_date, inp_sec_out
 
 
 JSON_INDENT = 4
-# Path to current tiegcm datafiles
-TIEGCMDATA = os.environ["TIEGCMDATA"]
-# Path to current tiegcm installation
-TIEGCMHOME = os.environ["TIEGCMHOME"]
-# Path to directory containing support files for makeitso.
-SUPPORT_FILES_DIRECTORY = os.path.join(TIEGCMHOME, "tiegcmrun")
-OPTION_DESCRIPTIONS_FILE = os.path.join(SUPPORT_FILES_DIRECTORY, "options_description.json")
-# Path to template .inp file.
-INP_TEMPLATE = os.path.join(SUPPORT_FILES_DIRECTORY, "template.inp")
 
-# Path to template .pbs file.
-PBS_TEMPLATE = os.path.join(SUPPORT_FILES_DIRECTORY, "template.pbs")
 
 def create_pbs_scripts(options, run_name, segment_number):
     """
@@ -51,9 +40,7 @@ def create_pbs_scripts(options, run_name, segment_number):
         FileNotFoundError: If the PBS template file is not found.
 
     """
-    global PBS_TEMPLATE
-    if PBS_TEMPLATE == None:
-        PBS_TEMPLATE = os.path.join(options["model"]["data"]["modeldir"], 'tiegcmrun/template.pbs')
+    PBS_TEMPLATE = os.path.join(options["model"]["data"]["modeldir"], 'tiegcmrun/template.pbs')
     with open(PBS_TEMPLATE, "r", encoding="utf-8") as f:
         template_content = f.read()
     template = Template(template_content)
@@ -80,9 +67,7 @@ def create_inp_scripts(options, run_name, segment_number):
     Returns:
         str: The path to the created input script.
     """
-    global INP_TEMPLATE
-    if INP_TEMPLATE == None:
-        INP_TEMPLATE = os.path.join(options["model"]["data"]["modeldir"],'tiegcmrun/template.inp')
+    INP_TEMPLATE = os.path.join(options["model"]["data"]["modeldir"],'tiegcmrun/template.inp')
     with open(INP_TEMPLATE, "r", encoding="utf-8") as f:
         template_content = f.read()
     template = Template(template_content)
@@ -99,7 +84,7 @@ def create_inp_scripts(options, run_name, segment_number):
         f.write(inp_content)    
     return inp_script
 
-def segment_inp_pbs(options, run_name, pbs, engage_options=None):
+def segment_inp_pbs(options, run_name, pbs, TIEGCMHOME, engage_options=None):
     segment_times = segment_time(options["inp"]["start_time"], options["inp"]["stop_time"], [int(i) for i in options["inp"]["segment"].split()])
     pri_files = 0
     sec_files = 0
@@ -205,7 +190,8 @@ def segment_inp_pbs(options, run_name, pbs, engage_options=None):
                         f.write("import interpolation\n")
                         horires_coupled = engage_options["horires_coupled"]
                         vertres_coupled, mres_coupled, nres_grid_coupled, STEP_coupled = resolution_solver(horires_coupled,engage_options)
-                        SOURCE_coupling = os.path.join(os.path.dirname(segment_options["model"]["data"]["workdir"]),f'{engage_options["job_name"]}_prim.nc')
+                        SOURCE_coupling = os.path.join(os.path.dirname(segment_options["model"]["data"]["workdir"]),
+                                                       f'{engage_options["job_name"]}_prim.nc')
                         input_standalone = f"{histdir}/{run_name}_prim_{'{:02d}'.format(pri_files)}.nc"
                         f.write(f"interpolation.interpic('{input_standalone}',{float(horires_coupled)},{float(vertres_coupled)},{float(segment_options['model']['specification']['zitop'])},'{SOURCE_coupling}')\n")
                         if options["simulation"]["hpc_system"] == "derecho":
