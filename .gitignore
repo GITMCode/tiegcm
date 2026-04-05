@@ -1,8 +1,11 @@
 #build and run directories
-build/*
-stdout/*
-exec/*
-
+build/
+stdout/
+exec/
+hist/
+run*/
+Makefile
+tiegcmdata/
 
 ## Compiled Object files
 *.slo
