@@ -44,45 +44,51 @@ from engage_solver import engage_parser, engage_run, engage_options_updater
 from namelist_solver import inp_pri_date,valid_hist,inp_mxhist,inp_sechist,inp_prihist,inp_pri_out,inp_sec_out,inp_sec_date
 from output_solver import create_inp_scripts, create_pbs_scripts, segment_inp_pbs
 from misc import get_mtime, segment_time, valid_bench, find_file, resolution_solver, select_resource_defaults, select_source_defaults
-# Program constants
-RED = '\033[31m'  # Red text
-GREEN = '\033[32m'  # Green text
-YELLOW = '\033[33m'  # Yellow text
-RESET = '\033[0m'  # Reset to default color
 
 
-# Program description.
-DESCRIPTION = "Interactive script to prepare a TIEGCM model run."
+def set_globals():
+    """
+    Sets global variables used throughout this script.
+    Refactored so help can be run without needing env vars.
 
-# Indent level for JSON output.
-JSON_INDENT = 4
+    """
+    global RED, GREEN, YELLOW, GREY, RESET, JSON_INDENT, TIEGCMDATA, TIEGCMHOME,\
+      SUPPORT_FILES_DIRECTORY, INP_TEMPLATE, PBS_TEMPLATE, OPTION_DESCRIPTIONS_FILE, BENCHAMRKS_FILE
+    # Program constants
+    RED = '\033[31m'  # Red text
+    GREEN = '\033[32m'  # Green text
+    YELLOW = '\033[33m'  # Yellow text
+    RESET = '\033[0m'  # Reset to default color
 
-# Path to current tiegcm datafiles
-try:
-    TIEGCMDATA = os.environ["TIEGCMDATA"]
-except:
-    os.environ['TIEGCMDATA'] = input(f'{RED}Unable to get TIEGCMDATA environment variable.{RESET}\n{YELLOW}Use command "export TIEGCMDATA=Path/To/Data" to set environment variable.{RESET}\nEnter TIEGCM data directory: ')
-    TIEGCMDATA = os.environ["TIEGCMDATA"]
+    # Indent level for JSON output.
+    JSON_INDENT = 4
 
-# Path to current tiegcm installation
-try:
-    TIEGCMHOME = os.environ["TIEGCMHOME"]
-except:
-    os.environ['TIEGCMHOME'] = input(f'{RED}Unable to get TIEGCMHOME environment variable.{RESET}\n{YELLOW}Use command "export TIEGCMHOME=Path/To/TIEGCM" to set environment variable.{RESET}\nEnter TIEGCM model directory: ')
-    TIEGCMHOME = os.environ["TIEGCMHOME"]
-# Path to directory containing support files for makeitso.
-SUPPORT_FILES_DIRECTORY = os.path.join(TIEGCMHOME, "tiegcmrun")
+    # Path to current tiegcm datafiles
+    try:
+        TIEGCMDATA = os.environ["TIEGCMDATA"]
+    except:
+        os.environ['TIEGCMDATA'] = input(f'{RED}Unable to get TIEGCMDATA environment variable.{RESET}\n{YELLOW}Use command "export TIEGCMDATA=Path/To/Data" to set environment variable.{RESET}\nEnter TIEGCM data directory: ')
+        TIEGCMDATA = os.environ["TIEGCMDATA"]
 
-# Path to template .inp file.
-INP_TEMPLATE = os.path.join(SUPPORT_FILES_DIRECTORY, "template.inp")
+    # Path to current tiegcm installation
+    try:
+        TIEGCMHOME = os.environ["TIEGCMHOME"]
+    except:
+        os.environ['TIEGCMHOME'] = input(f'{RED}Unable to get TIEGCMHOME environment variable.{RESET}\n{YELLOW}Use command "export TIEGCMHOME=Path/To/TIEGCM" to set environment variable.{RESET}\nEnter TIEGCM model directory: ')
+        TIEGCMHOME = os.environ["TIEGCMHOME"]
+    # Path to directory containing support files for makeitso.
+    SUPPORT_FILES_DIRECTORY = os.path.join(TIEGCMHOME, "tiegcmrun")
 
-# Path to template .pbs file.
-PBS_TEMPLATE = os.path.join(SUPPORT_FILES_DIRECTORY, "template.pbs")
+    # Path to template .inp file.
+    INP_TEMPLATE = os.path.join(SUPPORT_FILES_DIRECTORY, "template.inp")
 
-OPTION_DESCRIPTIONS_FILE = os.path.join(SUPPORT_FILES_DIRECTORY, "options_description.json")
+    # Path to template .pbs file.
+    PBS_TEMPLATE = os.path.join(SUPPORT_FILES_DIRECTORY, "template.pbs")
 
-BENCHAMRKS_FILE = os.path.join(SUPPORT_FILES_DIRECTORY, 'benchmarks.json')
+    OPTION_DESCRIPTIONS_FILE = os.path.join(SUPPORT_FILES_DIRECTORY, "options_description.json")
 
+    BENCHAMRKS_FILE = os.path.join(SUPPORT_FILES_DIRECTORY, 'benchmarks.json')
+    return
 
 
 def create_command_line_parser():
@@ -103,7 +109,8 @@ def create_command_line_parser():
     ------
     None
     """
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(
+        description="Interactive script to prepare a TIEGCM model run")
     parser.add_argument(
         "--clobber", action="store_false",
         help="Overwrite existing options file (default: %(default)s)."
@@ -951,6 +958,8 @@ def tiegcmrun(args=None):
         args = parser.parse_args(args)
     else:
         args = parser.parse_args()
+    # Set globals & then decode arguments
+    set_globals()
     clobber = args.clobber
     debug = args.debug
     options_path = args.options_path
