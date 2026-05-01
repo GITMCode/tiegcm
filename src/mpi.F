@@ -160,6 +160,18 @@
       logical :: is_prime
       integer :: ier,i,fullrank,tmpComm,color
       logical :: doVoltCommSkip = .false.
+      character(len=8) :: pmi_val
+      integer :: pmi_status
+!
+! MPICH/Hydra sets PMI_FD when launched via mpirun/mpiexec.
+! Without it MPI_Init hangs and cannot be interrupted with Ctrl+C.
+      call get_environment_variable('PMI_FD', pmi_val,
+     |  status=pmi_status)
+      if (pmi_status /= 0) then
+        write(6,"('>>> tiegcm must be launched via mpirun')")
+        write(6,"('>>> or mpiexec, e.g.: mpirun -np 1 ./tiegcm.exe')")
+        stop 1
+      endif
 !
       ier = 0
 #ifdef VT
