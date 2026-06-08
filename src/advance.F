@@ -20,6 +20,9 @@
       use hist_module,only: nstep,modeltime
       use heelis_module,only: heelis
       use wei05sc,only: weimer05        ! Weimer 2005 model
+#ifdef HAVEMILE
+      use ModIETIEGCM, only: update_ie_potential
+#endif
       use input_module,only: pristart,step,idynamo=>dynamo,
      |  calendar_advance,gpi_ncfile,potential_model,wei05sc_ncfile,
      |  imf_ncfile,current_pg,current_kq,iamie,amie_ibkg,
@@ -553,6 +556,10 @@
 !  If Weimer is used, then theta0,phid etc is changed before use in aurora
 !   in dynamics.
 !
+#ifdef HAVEMILE
+      ! Delegate all non-AMIE potential handling to the wrapper
+      call update_ie_potential()
+#else
       if (potential_model == 'WEIMER05'.or.
      |    potential_model == 'WEIMER') then
 !
@@ -578,6 +585,7 @@
           enddo ! i=1,nmlonp1
         enddo ! j=1,nmlat0
       endif
+#endif
 !
 ! If an amie run, use tiepot from amie.F:
 ! (phihm and tiepot are dimensioned (nmlonp1,nmlat))
