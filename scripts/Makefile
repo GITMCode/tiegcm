@@ -73,6 +73,9 @@ nchist.F:  $(shell rm -f svn_revision.inc) svn_revision.inc
 ifeq ($(HAVEMILE),TRUE)
 libIE:
 	$(MAKE) -C $(IEDIR) LIB
+
+$(OBJS): | libIE
+
 $(EXECNAME): $(OBJS) libIE
 	$(FC) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 else
@@ -126,7 +129,9 @@ util.o: util.F
 
 clean:
 	rm -f Depends Srcfiles *.o *.mod $(EXECNAME)
+	@if [ -d "$(IEDIR)/src" ]; then $(MAKE) -C $(IEDIR)/src clean; fi
 veryclean:
 	rm -f Depends Srcfiles *.o *.mod $(EXECNAME) Makefile Make.env $(MAKE_MACHINE) machines.ini mkdepends defs.h fort*
+	@if [ -d "$(IEDIR)/src" ]; then $(MAKE) -C $(IEDIR)/src clean; fi
 
 include Depends

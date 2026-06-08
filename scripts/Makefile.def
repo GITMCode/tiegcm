@@ -1,5 +1,6 @@
-include build/Make.env
-include build/$(MAKE_MACHINE)
+TIEGCM_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+include $(TIEGCM_ROOT)/build/Make.env
+include $(TIEGCM_ROOT)/build/$(MAKE_MACHINE)
 
 COMPILE.f77 = $(MPIF90)
 COMPILE.f90 = $(MPIF90)
