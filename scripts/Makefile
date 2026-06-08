@@ -70,8 +70,15 @@ svn_revision.inc:
 
 nchist.F:  $(shell rm -f svn_revision.inc) svn_revision.inc
 
+ifeq ($(HAVEMILE),TRUE)
+libIE:
+	$(MAKE) -C $(IEDIR) LIB
+$(EXECNAME): $(OBJS) libIE
+	$(FC) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
+else
 $(EXECNAME): $(OBJS)
 	$(FC) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
+endif
 
 CPPFLAGS := $(null)
 ifeq ($(COUPLING),TRUE)
@@ -85,6 +92,11 @@ ifeq ($(DEBUG),TRUE)
   OPTIM    := -g
 else
   DBGFLAGS := $(null)
+endif
+ifeq ($(HAVEMILE),TRUE)
+  CPPFLAGS += -DHAVEMILE
+  INC_DIRS += -I$(IEDIR)/src
+  LIBS     += -L$(IEDIR)/lib -lIE
 endif
 ifeq ($(OS),Linux)
   CPPFLAGS := -DLINUX $(CPPFLAGS)

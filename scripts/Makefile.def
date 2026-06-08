@@ -1,0 +1,19 @@
+include build/Make.env
+include build/$(MAKE_MACHINE)
+
+COMPILE.f77 = $(MPIF90)
+COMPILE.f90 = $(MPIF90)
+LINK.f90    = $(MPIF90)
+AR          = ar -rs
+
+CFLAG  = -c -w
+Cflag3 = $(CFLAG) $(FFLAGS) $(OPTIM) $(DBGFLAGS)
+
+.SUFFIXES:
+.SUFFIXES: .f90 .F90 .f .for .ftn .o
+
+.f90.o:
+	$(COMPILE.f90) $(Cflag3) $<
+
+.f.o:
+	$(COMPILE.f77) -ffixed-line-length-132 $(Cflag3) $<
