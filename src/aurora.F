@@ -166,6 +166,9 @@
      |  phinm0(2),    ! angle curvature of convection on minus side of nightside entrance (rad)
      |  rr1(2)        ! exponential fall-off of convection from convection radius
 !
+! Integrated hemispheric power (GW), computed after aurora loop each timestep:
+      real :: hpow_nh = 0., hpow_sh = 0.
+!
 ! Auroral circle coordinates (see sub aurora):
       real,dimension(nlonp4,nlat) ::
      |  dlat_aur, ! = rlatm = magnetic latitude (radians)
@@ -436,6 +439,35 @@
       endif
       end subroutine aurora_cons
 !-----------------------------------------------------------------------
+      subroutine aurora_compute_hp(lat0_in,lat1_in,lon0_in,lon1_in)
+!
+! Integrate eflux over area for each hemisphere and MPI-reduce to get
+! actual hemispheric power (GW).  Call from advance after dynamics.
+!
+      use mpi
+      use mpi_module,only: TIEGCM_WORLD
+      use params_module,only: glat,nlon,dlat,dlon
+      use cons_module,only: re,dtr
+      integer,intent(in) :: lat0_in,lat1_in,lon0_in,lon1_in
+      integer :: lat,i,ier
+      real :: area,hp_local(2),hp_global(2)
+      hp_local = 0.
+      do lat=lat0_in,lat1_in
+        area = re**2*cos(glat(lat)*dtr)*dlat*dtr*dlon*dtr
+        do i=3,nlon+2 ! real lons only; skip ghost cells at 1,2 and nlon+3,nlon+4
+          if (glat(lat) >= 0.) then
+            hp_local(2) = hp_local(2)+eflux(i,lat)*area
+          else
+            hp_local(1) = hp_local(1)+eflux(i,lat)*area
+          endif
+        enddo
+      enddo
+      call MPI_Allreduce(hp_local,hp_global,2,MPI_REAL,
+     |  MPI_SUM,TIEGCM_WORLD,ier)
+      hpow_sh = hp_global(1)*1.e-16 ! ergs/s -> GW (1 GW = 1e16 ergs/s)
+      hpow_nh = hp_global(2)*1.e-16
+      end subroutine aurora_compute_hp
+!-----------------------------------------------------------------------
       subroutine aurora(o2,o1,he,n2,xnmbar,scht,
      |  lev0,lev1,lon0,lon1,lat0,lat1)
 !
@@ -694,6 +726,8 @@
         call addfld('WI_SAPS','SAPS ion drift','m/s',swi,
      |    'lon',lon0,lon1,'lat',lat0,lat1,0)
       endif
+      call addfld('EFLUX_AUR','Aurora energy flux','ergs/cm2/s',
+     |  eflux(lon0:lon1,lat0:lat1),'lon',lon0,lon1,'lat',lat0,lat1,0)
 !
       do lat=lat0,lat1
 !

@@ -45,7 +45,8 @@
       use qrj_module,only: init_sflux
       use magfield_module,only: sunloc_apex
       use pdynamo_module,only: pefield
-      use aurora_module,only: aurora_cons
+      use aurora_module,only: aurora_cons,aurora_compute_hp,
+     |  hpow_nh,hpow_sh
       use hdif_module,only: hdif1,hdif2
       use current,only: noso_crrt,noso_crdens,nscrrt_glb=>nscrrt
       use timing_module,only: timer,timing
@@ -556,10 +557,6 @@
 !  If Weimer is used, then theta0,phid etc is changed before use in aurora
 !   in dynamics.
 !
-#ifdef HAVEMILE
-      ! Delegate all non-AMIE potential handling to the wrapper
-      call update_ie_potential()
-#else
       if (potential_model == 'WEIMER05'.or.
      |    potential_model == 'WEIMER') then
 !
@@ -585,6 +582,12 @@
           enddo ! i=1,nmlonp1
         enddo ! j=1,nmlat0
       endif
+
+#ifdef HAVEMILE
+      ! Delegate potential handling to the wrapper, overriding native arrays
+      if (potential_model /= 'NONE') then
+        call update_ie_potential(byimf, bzimf, swvel, swden)
+      endif
 #endif
 !
 ! If an amie run, use tiepot from amie.F:
@@ -608,6 +611,9 @@
       call dynamics(nstep,istep)
       call timer(time0_dynamics,time1_dynamics,'DYNAMICS',1,0)
       if (debug) write(6,"('advance after dynamics: istep=',i4)") istep
+      call aurora_compute_hp(lat0,lat1,lon0,lon1)
+      if (mytid==0) write(6,"('aurora hpower_actual (GW): NH=',f8.2,
+     |  ' SH=',f8.2)") hpow_nh,hpow_sh
       if (timing%level >= 2.and.time2print(nstep,istep))
      |  write(6,"('Time in DYNAMICS =     ',f12.2,
      |    ' Advance: step ',i5)") time1_dynamics,istep
