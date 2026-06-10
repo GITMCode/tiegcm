@@ -124,6 +124,7 @@
 !             can be either WEIMER01 or WEIMER05.
 !
      |  potential_model,  ! electric potential model used
+     |  aurora_model,     ! aurora model used
                           !  Values can be 'HEELIS', 'WEIMER', or 'NONE'
                           !  If absent, the default value is set to 'HEELIS'
      |  weimer_ncfile,    ! path to netcdf weimer01 coefficients file
@@ -191,7 +192,7 @@
      |  label,step,nstep_sub,
      |  source,source_start,output,pristart,pristop,prihist,
      |  secout,secstart,secstop,sechist,secflds,
-     |  potential_model,eddy_dif,dynamo,tide,tide2,tide3m3,
+     |  potential_model,aurora_model,eddy_dif,dynamo,tide,tide2,tide3m3,
      |  f107,f107a,power,ctpoten,bximf,byimf,bzimf,swvel,swden,al,
      |  kp,colfac,joulefac,aurora,gpi_ncfile,gswm_mi_di_ncfile,
      |  gswm_mi_sdi_ncfile,gswm_nm_di_ncfile,gswm_nm_sdi_ncfile,
@@ -358,6 +359,8 @@
       f107a_time(:,:) = spval
 !
       potential_model = ' '
+      ! auroral_model only used when HAVEMILE (GITMCode/Electrodynamics)
+      aurora_model = 'emery'
       source = ' '
       output = ' '
       source_start(:) = ispval
@@ -689,7 +692,7 @@
         write(6,"('Input: thermal electron heating scheme uses',
      |    '6th order Smithtro & Solomon [2008] formula')")
       else
-        write(6,"('>>> INPUT: ELECTRON_HEATING can only be 4 or 6,'
+        write(6,"('>>> INPUT: ELECTRON_HEATING can only be 4 or 6,',
      |    'but it is given as',i4)") electron_heating
         call shutdown('Invalid thermal electron heating scheme')
       endif
@@ -1561,6 +1564,9 @@
 
       write(6,"('  High-lat electric potential model:  ',
      |      'potential_model = ',a)") trim(potential_model)
+      if (len_trim(aurora_model)>0) write(6,
+     |    "('  High-lat aurora model:  ',
+     |      'aurora_model = ',a)") trim(aurora_model)
       if (trim(potential_model)=='WEIMER01')
      |  write(6,"('  weimer coefs: weimer_ncfile = ',a)") 
      |    trim(weimer_ncfile)
@@ -2317,7 +2323,9 @@
 !
 ! Report to stdout for debug: 
 !     write(6,"(/,'inp_solar returning:')")
-!     write(6,"('potential_model=',a)") trim(potential_model)
+!      write(6,"('potential_model=',a)") trim(potential_model)
+      if (len_trim(aurora_model) > 0) 
+     |  write(6,"('aurora_model=',a)") trim(aurora_model)
 !     if (len_trim(gpi_ncfile) > 0) 
 !    |  write(6,"('gpi_ncfile=',a)") trim(gpi_ncfile)
 !     if (len_trim(imf_ncfile) > 0) 

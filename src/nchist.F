@@ -1198,7 +1198,7 @@
 !     is taken out of define mode (ready to receive histories)
 !
       use hist_module,only: h,sh,nsource
-      use input_module,only: potential_model
+      use input_module,only: potential_model, aurora_model
       use params_module,only: tgcm_name,tgcm_version
 !
 ! Args:
@@ -2189,6 +2189,16 @@
         write(char120,"('Error return from nf_put_att_text ',
      |    'for potential_model global attribute')")
         call handle_ncerr(istat,char120)
+      endif
+
+      if (len_trim(aurora_model) > 0) then
+        istat = nf_put_att_text(ncid,NF_GLOBAL,"aurora_model",
+     |    len_trim(aurora_model),trim(aurora_model))
+        if (istat /= NF_NOERR) then
+          write(char120,"('Error return from nf_put_att_text ',
+     |      'for aurora_model global attribute')")
+          call handle_ncerr(istat,char120)
+        endif
       endif
 !
 ! tuv_lbc_intop==0 (lbc of t,u,v are not stored in top k-slot)

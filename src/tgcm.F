@@ -37,6 +37,9 @@
 #ifdef OMP
 !     use omp_module,only: init_omp
 #endif
+#ifdef HAVEMILE
+      use modietiegcm, only: init_ie
+#endif
       implicit none
 !
 ! Local:
@@ -126,6 +129,12 @@
 !
 ! Set several lower boundary parameters (including Hough mode functions):
       call init_lbc ! lbc module
+
+!
+! If using MILE (Electrodynamics/), initialize it
+#ifdef HAVEMILE
+      call init_ie
+#endif
 
 !
 ! Initialize code coupling communication framework (MPI)

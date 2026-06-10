@@ -55,8 +55,12 @@
 !             and mods to gpi.F. 
 ! 1/24/08 btf:Changed alfad,ed, alfac,ec as per Wenbin.
 !
-      use params_module,only: nlonp4,nlevp1,nlat
+      use params_module,only: nlonp4,nlevp1,nlat,nmlon,nmlat
       implicit none
+#ifdef HAVEMILE
+      real :: ie_eflux_mag(nmlon, nmlat) = 0.  ! diffuse e- energy flux  (eV/cm2/s), mag grid
+      real :: ie_avee_mag(nmlon, nmlat)  = 0.  ! diffuse e- average energy (eV),     mag grid
+#endif
 !
 ! VT vampir tracing:
 !
@@ -474,13 +478,13 @@
 ! Auroral parameterization driver.
 ! (called by sub dynamics)
 !
-      use magfield_module,only: 
+      use magfield_module,only:
      |  rlatm,rlonm, ! magnetic latitude,longitude grid (radians)
-     |  sunlons,     ! sun's mag longitudes (see sub sunloc, magfield.F) 
+     |  sunlons,     ! sun's mag longitudes (see sub sunloc, magfield.F)
      |  csdec,sndec
-      use params_module,only: nlon,spval,glat
-      use input_module,only: iamie
-      use cons_module,only: pi,dtr
+      use params_module,only: nlon,spval,glat,nmlon,nmlat
+      use input_module,only: iamie,aurora_model
+      use cons_module,only: pi,dtr,ylatm,ylonm,dlonm
       use amie_module,only: ekvg,efxg
       use mage_coupling_module,only: geng,gflx     !MAGE
 !
@@ -530,6 +534,9 @@
      |  aurspread,      ! Gaussian spread: exp(-(dtheta/halfwidth)**2)
      |  clat
       real,dimension(lon0:lon1,lat0:lat1) :: sui,svi,swi    ! SAPS ion drifts
+#ifdef HAVEMILE
+      integer :: im_lon, im_lat
+#endif
 !
 #ifdef VT
 !     code = 130 ; state = 'aurora' ; activity='ModelCode'
@@ -611,6 +618,7 @@
 ! 11/08 EMERY added eflux=flux*fac_p2e*alfa
           eflux(i,lat) = e0*(1.-ree*coslamda)*aurspread
           flux(i,lat) = eflux(i,lat)/(fac_p2e*alfa(i,lat))
+
           alfa2(i,lat) = alfa20*(1.-ralfa2*coslamda)
           eflux2(i,lat) = e20*(1.-re2*coslamda)*aurspread
           flux2(i,lat) = eflux2(i,lat)/(fac_p2e*alfa2(i,lat))
@@ -726,6 +734,23 @@
         call addfld('WI_SAPS','SAPS ion drift','m/s',swi,
      |    'lon',lon0,lon1,'lat',lat0,lat1,0)
       endif
+#ifdef HAVEMILE
+      if (trim(aurora_model) /= 'emery') then
+! Replace primary diffuse aurora (R&R) with Electrodynamics values.
+! Nearest-neighbor map from IE magnetic grid to TIEGCM geographic domain.
+! Cusp, drizzle, alfa2/3, flux2/3 are left untouched.
+        do lat=lat0,lat1
+          do i=lon0,lon1
+            im_lon = 1+modulo(nint((rlonm(i,lat)-ylonm(1))/
+     |                        dlonm), nmlon)
+            im_lat = minloc(abs(ylatm-dlat_aur(i,lat)), 1)
+            alfa(i,lat) = max(ie_avee_mag(im_lon,im_lat)/2.0, 0.01)
+            eflux(i,lat) = max(ie_eflux_mag(im_lon,im_lat), 1.e-20)
+            flux(i,lat) = eflux(i,lat)/(fac_p2e*alfa(i,lat))
+          enddo
+        enddo
+      endif
+#endif
       call addfld('EFLUX_AUR','Aurora energy flux','ergs/cm2/s',
      |  eflux(lon0:lon1,lat0:lat1),'lon',lon0,lon1,'lat',lat0,lat1,0)
 !
