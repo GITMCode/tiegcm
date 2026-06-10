@@ -187,9 +187,24 @@ def _write_root_makefile(tiegcmhome, tiegcmdata, gswm_res):
 def _configure_mile(havemile, tiegcmhome, utildir):
     if not havemile:
         return
-    
-    # TODO: Add check for ext/Electrodynamics existence here
-    
+
+    ext_dir = os.path.join(tiegcmhome, "ext", "Electrodynamics")
+    repo_url = "https://github.com/GITMCode/Electrodynamics.git"
+    if not os.path.isdir(ext_dir):
+        print("  Cloning Electrodynamics into ext/Electrodynamics (with HTTPS)...")
+        result = subprocess.run(["git", "clone", repo_url, ext_dir],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            print("  Electrodynamics clone failed. Perhaps try cloning it manually?")
+            print(f"        {result.stderr.strip()}")
+    else:
+        print("  MILE: ext/Electrodynamics found — pulling latest...")
+        result = subprocess.run(["git", "-C", ext_dir, "pull"],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            print("  Warning: git pull of 'ext/Electrodynamics' failed, continuing.")
+            print(f"        {result.stderr.strip()}")
+
     for fname in ["Makefile.def", "Makefile.conf"]:
         src = os.path.join(utildir, fname)
         dest = os.path.join(tiegcmhome, fname)
