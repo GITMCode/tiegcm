@@ -445,8 +445,18 @@
 !-----------------------------------------------------------------------
       subroutine aurora_compute_hp(lat0_in,lat1_in,lon0_in,lon1_in)
 !
-! Integrate eflux over area for each hemisphere and MPI-reduce to get
-! actual hemispheric power (GW).  Call from advance after dynamics.
+! Integrate magnetospheric electron precipitation over area for each
+! hemisphere and MPI-reduce to get actual hemispheric power (GW).
+! Includes:
+!   - auroral oval (eflux). HP_eflux = HP_input (with auroral_model=Emery)
+!   - soft/high-alt electrons (eflux2),
+!   - cusp (ec * cusp shape)
+!   - polar drizzle (ed * drizl shape).
+! Excludes:
+!   - high-energy electrons (eflux3, ~40 MeV, radiation belt /
+!       relativistic precipitation -- not auroral???) 
+!   - solar protons (add_sproton, SEP events -- not aurora).
+! Call from advance after dynamics.
 !
       use mpi
       use mpi_module,only: TIEGCM_WORLD
@@ -454,15 +464,17 @@
       use cons_module,only: re,dtr
       integer,intent(in) :: lat0_in,lat1_in,lon0_in,lon1_in
       integer :: lat,i,ier
-      real :: area,hp_local(2),hp_global(2)
+      real :: area,eflux_total,hp_local(2),hp_global(2)
       hp_local = 0.
       do lat=lat0_in,lat1_in
         area = re**2*cos(glat(lat)*dtr)*dlat*dtr*dlon*dtr
-        do i=3,nlon+2 ! real lons only; skip ghost cells at 1,2 and nlon+3,nlon+4
+        do i=3,nlon+2 ! real longitudes only; skip ghost cells at 1,2 and nlon+3,nlon+4
+          eflux_total = eflux(i,lat) + eflux2(i,lat)
+     |      + ec*cusp(i,lat) + ed*drizl(i,lat)
           if (glat(lat) >= 0.) then
-            hp_local(2) = hp_local(2)+eflux(i,lat)*area
+            hp_local(2) = hp_local(2)+eflux_total*area
           else
-            hp_local(1) = hp_local(1)+eflux(i,lat)*area
+            hp_local(1) = hp_local(1)+eflux_total*area
           endif
         enddo
       enddo
