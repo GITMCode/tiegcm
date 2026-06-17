@@ -2,6 +2,8 @@ TIEGCM_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 include $(TIEGCM_ROOT)/build/Make.env
 include $(TIEGCM_ROOT)/build/$(MAKE_MACHINE)
 
+SCRIPTDIR   = $(TIEGCM_ROOT)/scripts
+
 COMPILE.f77 = $(MPIF90)
 COMPILE.f90 = $(MPIF90)
 LINK.f90    = $(MPIF90)

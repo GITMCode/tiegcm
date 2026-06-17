@@ -70,18 +70,24 @@ svn_revision.inc:
 
 nchist.F:  $(shell rm -f svn_revision.inc) svn_revision.inc
 
+EXT_LIBS :=
 ifeq ($(HAVEMILE),TRUE)
+EXT_LIBS += libIE
 libIE:
 	$(MAKE) -C $(IEDIR) LIB
-
-$(OBJS): | libIE
-
-$(EXECNAME): $(OBJS) libIE
-	$(FC) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
-else
-$(EXECNAME): $(OBJS)
-	$(FC) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 endif
+ifeq ($(HAVEINDICES),TRUE)
+EXT_LIBS += libIO
+libIO:
+	$(MAKE) -C $(IODIR) LIB
+endif
+
+ifneq ($(EXT_LIBS),)
+$(OBJS): | $(EXT_LIBS)
+endif
+
+$(EXECNAME): $(OBJS) $(EXT_LIBS)
+	$(FC) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 
 CPPFLAGS := $(null)
 ifeq ($(COUPLING),TRUE)
@@ -100,6 +106,11 @@ ifeq ($(HAVEMILE),TRUE)
   CPPFLAGS += -DHAVEMILE
   INC_DIRS += -I$(IEDIR)/src
   LIBS     += -L$(IEDIR)/lib -lIE
+endif
+ifeq ($(HAVEINDICES),TRUE)
+  CPPFLAGS += -DHAVEINDICES
+  INC_DIRS += -I$(IODIR)/src
+  LIBS     += -L$(IODIR)/lib -lIO
 endif
 ifeq ($(OS),Linux)
   CPPFLAGS := -DLINUX $(CPPFLAGS)
@@ -130,8 +141,10 @@ util.o: util.F
 clean:
 	rm -f Depends Srcfiles *.o *.mod $(EXECNAME)
 	@if [ -d "$(IEDIR)/src" ]; then $(MAKE) -C $(IEDIR)/src clean; fi
+	@if [ -d "$(IODIR)/src" ]; then $(MAKE) -C $(IODIR)/src clean; fi
 veryclean:
 	rm -f Depends Srcfiles *.o *.mod $(EXECNAME) Makefile Make.env $(MAKE_MACHINE) machines.ini mkdepends defs.h fort*
 	@if [ -d "$(IEDIR)/src" ]; then $(MAKE) -C $(IEDIR)/src clean; fi
+	@if [ -d "$(IODIR)/src" ]; then $(MAKE) -C $(IODIR)/src clean; fi
 
 include Depends

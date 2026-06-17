@@ -148,7 +148,7 @@ def _write_defs_h(builddir, horires, vertres, zitop, nres_grid):
 
 def _write_make_env(builddir, make_fragment, srcdir, exe_path,
                     coupling=False, hidra=False, debug=False, havemile=False,
-                    tiegcmhome=""):
+                    haveindices=False, tiegcmhome=""):
     content = (
         f"MAKE_MACHINE  = {make_fragment}\n"
         f"DIRS          = . {srcdir}\n"
@@ -160,6 +160,8 @@ def _write_make_env(builddir, make_fragment, srcdir, exe_path,
         f"DEBUG         = {str(debug).upper()}\n"
         f"HAVEMILE      = {str(havemile).upper()}\n"
         f"IEDIR         = {tiegcmhome}/ext/Electrodynamics\n"
+        f"HAVEINDICES   = {str(haveindices).upper()}\n"
+        f"IODIR         = {tiegcmhome}/ext/srcIndices\n"
     )
     with open(os.path.join(builddir, "Make.env"), "w") as f:
         f.write(content)
@@ -219,6 +221,43 @@ def _configure_mile(havemile, tiegcmhome, utildir):
     depend_path = os.path.join(ext_dir, "src", "Makefile.DEPEND")
     open(depend_path, "a").close()
 
+
+def _configure_indices(haveindices, tiegcmhome, utildir):
+    if not haveindices:
+        return
+
+    ext_dir = os.path.join(tiegcmhome, "ext", "srcIndices")
+    repo_url = "https://github.com/GITMCode/srcIndices.git"
+    if not os.path.isdir(ext_dir):
+        print("  Cloning srcIndices into ext/srcIndices (with HTTPS)...")
+        result = subprocess.run(["git", "clone", repo_url, ext_dir],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            print("  srcIndices clone failed. Perhaps try cloning it manually?")
+            print(f"        {result.stderr.strip()}")
+    else:
+        print("  ext/srcIndices found — pulling latest...")
+        result = subprocess.run(["git", "-C", ext_dir, "pull"],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            print("  Warning: git pull of 'ext/srcIndices' failed, continuing.")
+            print(f"        {result.stderr.strip()}")
+
+    for fname in ["Makefile.dirs", "Makefile.conf"]:
+        src = os.path.join(utildir, fname)
+        dest = os.path.join(tiegcmhome, fname)
+        if os.path.isfile(src):
+            shutil.copy(src, dest)
+
+    local_path = os.path.join(ext_dir, "build", "Makefile.local")
+    with open(local_path, "w") as f:
+        f.write(f"DIRSFILE := {tiegcmhome}/Makefile.dirs\n")
+        f.write(f"BUILDDIR  := {tiegcmhome}\n")
+
+    depend_path = os.path.join(ext_dir, "src", "Makefile.DEPEND")
+    open(depend_path, "a").close()
+
+
 def configure(args):
     compiler   = _detect_compiler(getattr(args, "compiler", None))
     horires    = float(args.horires)
@@ -226,7 +265,8 @@ def configure(args):
     debug      = bool(args.debug)
     coupling   = bool(args.coupling)
     hidra      = bool(args.hidra)
-    havemile   = bool(args.havemile)
+    havemile     = bool(args.havemile)
+    haveindices  = havemile
     tiegcmdata = _resolve_tiegcmdata(getattr(args, "tiegcmdata", None))
 
     if horires not in _RES_TABLE:
@@ -252,13 +292,14 @@ def configure(args):
                 shutil.copy(src, dest)
 
     _configure_mile(havemile, _TIEGCMHOME, utildir)
+    _configure_indices(haveindices, _TIEGCMHOME, utildir)
 
     defs_changed = _write_defs_h(
         builddir, horires, res["vertres"], zitop, res["nres_grid"]
     )
     _write_make_env(
         builddir, make_fragment, srcdir, exe_path, coupling, hidra, debug, havemile,
-        _TIEGCMHOME
+        haveindices, _TIEGCMHOME
     )
     gswm_res = f"{horires}d"
     _write_root_makefile(_TIEGCMHOME, tiegcmdata, gswm_res)
@@ -389,7 +430,7 @@ def _build_parser():
     p.add_argument("--debug",    "-d", action="store_true", help="Enable debug compilation.")
     p.add_argument("--coupling",       action="store_true", help="Enable GAMERA coupling.")
     p.add_argument("--hidra",          action="store_true", help="Enable HIDRA coupling.")
-    p.add_argument("--mile", dest="havemile", action="store_true", help="Enable Electrodynamics (MILE) integration.")
+    p.add_argument("--mile",    dest="havemile",     action="store_true", help="Enable Electrodynamics (MILE) + srcIndices integration.")
     p.add_argument(
         "--tiegcmdata", default=None, metavar="DIR",
         help="Path to TIEGCMDATA directory. Default: $TIEGCMDATA or tiegcmdata/.",
