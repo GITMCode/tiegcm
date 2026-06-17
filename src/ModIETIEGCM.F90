@@ -161,7 +161,6 @@ contains
       enddo
 
       deallocate(potential)
-      call ie%get_electron_diffuse_aurora(ie_eflux_mag, ie_avee_mag)
     else
       ! NONE potential
       do iLat = 1, nmlat0
@@ -169,6 +168,10 @@ contains
           phihm(iMlt, iLat) = 0.0
         enddo
       enddo
+    endif
+
+    if (ie%iAurora_ > 0) then
+      call ie%get_electron_diffuse_aurora(ie_eflux_mag, ie_avee_mag)
     endif
 
   end subroutine update_ie_potential

@@ -585,9 +585,7 @@
 
 #ifdef HAVEMILE
       ! Delegate potential handling to the wrapper, overriding native arrays
-      if (potential_model /= 'NONE') then
-        call update_ie_potential(byimf, bzimf, swvel, swden)
-      endif
+      call update_ie_potential(byimf, bzimf, swvel, swden)
 #endif
 !
 ! If an amie run, use tiepot from amie.F:
