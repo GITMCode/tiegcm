@@ -205,11 +205,19 @@ def _configure_mile(havemile, tiegcmhome, utildir):
             print("  Warning: git pull of 'ext/Electrodynamics' failed, continuing.")
             print(f"        {result.stderr.strip()}")
 
-    for fname in ["Makefile.def", "Makefile.conf"]:
+    for fname in ["Makefile.dirs", "Makefile.conf"]:
         src = os.path.join(utildir, fname)
         dest = os.path.join(tiegcmhome, fname)
         if os.path.isfile(src):
             shutil.copy(src, dest)
+
+    local_path = os.path.join(ext_dir, "build", "Makefile.local")
+    with open(local_path, "w") as f:
+        f.write(f"DIRSFILE := {tiegcmhome}/Makefile.dirs\n")
+        f.write(f"BUILDDIR  := {tiegcmhome}\n")
+
+    depend_path = os.path.join(ext_dir, "src", "Makefile.DEPEND")
+    open(depend_path, "a").close()
 
 def configure(args):
     compiler   = _detect_compiler(getattr(args, "compiler", None))
@@ -321,7 +329,8 @@ def uninstall():
         ]
 
     targets = (
-        [os.path.join(_TIEGCMHOME, "Makefile"), os.path.join(_TIEGCMHOME, "Makefile.def"), os.path.join(_TIEGCMHOME, "Makefile.conf")]
+        [os.path.join(_TIEGCMHOME, "Makefile"), os.path.join(_TIEGCMHOME, "Makefile.dirs"), 
+         os.path.join(_TIEGCMHOME, "Makefile.def"), os.path.join(_TIEGCMHOME, "Makefile.conf")]
         + [os.path.join(builddir, f) for f in ["Make.env", "defs.h", "Makefile", "mkdepends"]]
         + [os.path.join(builddir, f) for f in script_fragments]
     )
