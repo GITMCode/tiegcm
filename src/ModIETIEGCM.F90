@@ -1,7 +1,7 @@
 module ModIETIEGCM
 #ifdef HAVEMILE
   use ModIE
-  use params_module, only: nmlon, nmlat
+  use params_module, only: nmlon, nmlonp1, nmlat, spval
   implicit none
 
   type(ieModel), save :: ie
@@ -9,35 +9,130 @@ module ModIETIEGCM
 contains
 
   subroutine init_ie()
-    use input_module, only: potential_model, aurora_model
+    use input_module, only: potential_model, aurora_model, &
+                             srcindices_imf_file, srcindices_ae_file, &
+                             srcindices_hpi_file
+#ifdef HAVEINDICES
+    use ModIndices, only: init_imf, init_ae, init_hpi
+#endif
     implicit none
 
     ie = iemodel()
-
-    ! Set the names of the models (from .inp namelist)
     call ie%efield_model(potential_model)
     if (aurora_model /= 'emery') then
       call ie%aurora_model(aurora_model)
     else
       call ie%aurora_model('zero')
     endif
-
-    ! Point to Electrodynamics data
     call ie%model_dir("../ext/Electrodynamics/data/ext/")
-    
-    ! Initialize the IE library
     call ie%init()
+
+#ifdef HAVEINDICES
+    if (len_trim(srcindices_imf_file) > 0) &
+      call init_imf(trim(srcindices_imf_file))
+    if (len_trim(srcindices_ae_file) > 0) then
+      call init_ae(trim(srcindices_ae_file))
+      if (len_trim(srcindices_hpi_file) > 0) then
+        call init_hpi(trim(srcindices_hpi_file))
+      else
+        call init_hpi()  ! AE->HPI conversion
+      endif
+    elseif (len_trim(srcindices_hpi_file) > 0) then
+      call init_hpi(trim(srcindices_hpi_file))
+    endif
+#endif
 
   end subroutine init_ie
 
-  subroutine update_ie_potential(byimf_in, bzimf_in, swvel_in, swden_in)
-    use params_module, only: nmlon, nmlonp1, nmlat
-    use cons_module, only: ylonm, ylatm, pi
-    use input_module, only: potential_model, ctpoten, power
-    use magfield_module, only: sunlons
-    use pdynamo_module, only: phihm, nmlat0
+  ! Set all indices on ie before each timestep. Owns time-setting for
+  ! both Electrodynamics (ie%time_ymdhms) and srcIndices (set_time).
+  ! Falls back to namelist values when no index file is loaded.
+  subroutine set_ie_indices(byimf_in, bzimf_in, swvel_in, swden_in)
+    use input_module, only: power, kp, byimf, bzimf, swvel, swden
     use init_module, only: iyear, iday, uthr
     use wei05sc, only: cvt2md
+#ifdef HAVEINDICES
+    use ModIndices, only: get_index, get_nValues, set_time
+#endif
+    implicit none
+    real, intent(in), optional :: byimf_in, bzimf_in, swvel_in, swden_in
+    integer :: imo, ida, ihour, imin, isec
+#ifdef HAVEINDICES
+    real :: val
+#endif
+
+    call cvt2md(6, iyear, iday, imo, ida)
+    ihour = int(uthr)
+    imin  = int((uthr - real(ihour)) * 60.0)
+    isec  = 0
+
+    ! Time must be set before check_indices fires inside get_potential
+    call ie%time_ymdhms(iyear, imo, ida, ihour, imin, isec)
+
+#ifdef HAVEINDICES
+    call set_time(iyear, imo, ida, ihour, imin, isec)
+
+    if (get_nValues('imfby') > 0) then
+      call get_index('imfby', val); ie%needImfBy = val
+    elseif (present(byimf_in)) then
+      ie%needImfBy = byimf_in
+    else
+      ie%needImfBy = byimf
+    endif
+
+    if (get_nValues('imfbz') > 0) then
+      call get_index('imfbz', val); ie%needImfBz = val
+    elseif (present(bzimf_in)) then
+      ie%needImfBz = bzimf_in
+    else
+      ie%needImfBz = bzimf
+    endif
+
+    if (get_nValues('swvmag') > 0) then
+      call get_index('swvmag', val); ie%needSwV = val
+    elseif (present(swvel_in)) then
+      ie%needSwV = swvel_in
+    else
+      ie%needSwV = swvel
+    endif
+
+    if (get_nValues('swn') > 0) then
+      call get_index('swn', val); ie%needSwN = val
+    elseif (present(swden_in)) then
+      ie%needSwN = swden_in
+    else
+      ie%needSwN = swden
+    endif
+
+    if (get_nValues('hpin') > 0) then
+      call get_index('hpin', val); ie%needHpN = val
+      call get_index('hpis', val); ie%needHpS = val
+    else
+      ie%needHpN = power
+      ie%needHpS = power
+    endif
+
+    if (get_nValues('au') > 0) then
+      call get_index('au', val); ie%needAu = val
+      call get_index('al', val); ie%needAl = val
+    endif
+#else
+    if (present(byimf_in)) ie%needImfBy = byimf_in
+    if (present(bzimf_in)) ie%needImfBz = bzimf_in
+    if (present(swvel_in)) ie%needSwV   = swvel_in
+    if (present(swden_in)) ie%needSwN   = swden_in
+    ie%needHpN = power
+    ie%needHpS = power
+#endif
+
+    if (kp /= spval) ie%needKp = kp
+
+  end subroutine set_ie_indices
+
+  subroutine update_ie_potential(byimf_in, bzimf_in, swvel_in, swden_in)
+    use cons_module, only: ylonm, ylatm, pi
+    use magfield_module, only: sunlons
+    use pdynamo_module, only: phihm, nmlat0
     use aurora_module, only: ie_eflux_mag, ie_avee_mag
 
     implicit none
@@ -45,22 +140,9 @@ contains
     integer :: iMlt, iLat
     real, allocatable :: potential(:, :)
     real, intent(in), optional :: byimf_in, bzimf_in, swvel_in, swden_in
-    integer :: imo, ida, ihour, imin, isec
 
-
-    if (ie%iEfield_ == iWeimer05_) then
-      if (present(byimf_in)) ie%needImfBy = byimf_in
-      if (present(bzimf_in)) ie%needImfBz = bzimf_in
-      if (present(swvel_in)) ie%needSwV = swvel_in
-      if (present(swden_in)) ie%needSwN = swden_in
-    endif
-
-      ! Update time in Electrodynamics (this computes tilt for Weimer05!)
-      call cvt2md(6, iyear, iday, imo, ida)
-      ihour = int(uthr)
-      imin = int((uthr - real(ihour))*60.0)
-      isec = 0
-      call ie%time_ymdhms(iyear, imo, ida, ihour, imin, isec)
+    ! Set indices and time before calling get_potential
+    call set_ie_indices(byimf_in, bzimf_in, swvel_in, swden_in)
 
     ! Update grid dynamically because MLT changes with time 'sunlons'
     if (ie%neednMLTs /= nmlon .or. ie%neednLats /= nmlat) then
@@ -78,9 +160,6 @@ contains
         ie%needMlts(iMlt, iLat) = ((ylonm(iMlt) - sunlons(1))*12.0/pi) + 12.0
       enddo
     enddo
-
-    ie%needHpN = power
-    ie%needHpS = power
 
     if (ie%iEfield_ > 0) then
       allocate(potential(nmlon, nmlat))

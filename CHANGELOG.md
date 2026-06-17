@@ -51,7 +51,7 @@ potentials are <3% different.
   Fortran-based IE library with many empirical models.
 - `auroral_model` option added. Default `emery` option to not affect current
   functionality.
-- `Makefile.conf` and `Makefile.def` created with Electrodynamics-specific compilation
+- `Makefile.conf` and `Makefile.dirs` created with Electrodynamics-specific compilation
   directives
 - All electrodynamics-related code is blocked with fpp directives, meaning they are not
   seen unless user explicitly opts in.
@@ -99,7 +99,7 @@ potentials are <3% different.
 
 ## Known remaining issues:
 
-- Weimer paths still require `$TIEGCMDATA` be set (no other inputs do??)
+- ~~Weimer paths still require `$TIEGCMDATA` be set~~ — fixed, now uses relative `tiegcmdata/` path
 - No AE/AU/AL reader (yet)
 - If potential model is `weimer`, `Weimer` or `weimer05` (not `WEIMER05`), TIEGCM will
   use Emery boundaries in aurora (cusp, drizzle, saps), ***not*** Weimer boundaries. Not

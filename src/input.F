@@ -148,6 +148,11 @@
      |  eclipse_list,       ! Eclipse list data file
      |  mixfile             ! filename for oneway driving
 
+      character(len=mxlen_filename) ::
+     |  srcindices_imf_file, ! srcIndices OMNI IMF/SW data file
+     |  srcindices_ae_file,  ! srcIndices AE/AU/AL SME data file
+     |  srcindices_hpi_file  ! srcIndices NOAA hemispheric power file
+
 !     integer,parameter :: ngpivars = 4
 !     real :: gpi_vars(ngpivars) ! f107,f107a,power,ctpoten
 !     character(len=16) ::
@@ -205,6 +210,7 @@
      |  bgrddata_ncfile,ctmt_ncfile,electron_heating,duff,
      |  amienh,amiesh,amie_ibkg,he_coefs_ncfile,enforce_n2,et,saps,
      |  subaur_data,doEclipse,eclipse_list,oneway,mixfile,
+     |  srcindices_imf_file,srcindices_ae_file,srcindices_hpi_file,
      |  nudge_ncpre,nudge_ncfile,nudge_ncpost,nudge_flds,
      |  nudge_lbc,nudge_f4d,nudge_use_refdate,nudge_refdate,
      |  nudge_sponge,nudge_delta,nudge_power,nudge_alpha,
@@ -294,6 +300,9 @@
       subaur_data = ' '
       eclipse_list = ' '
       mixfile = 'msphere.mix.h5'
+      srcindices_imf_file = ' '
+      srcindices_ae_file  = ' '
+      srcindices_hpi_file = ' '
 !
       start_day  = ispval
       start_year = ispval
