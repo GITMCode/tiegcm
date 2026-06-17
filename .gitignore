@@ -4,7 +4,7 @@ stdout/
 exec/
 hist/
 run*/
-Makefile*
+/Makefile*
 tiegcmdata/
 
 ## Compiled Object files
