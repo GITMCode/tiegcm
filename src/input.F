@@ -103,7 +103,10 @@
      |  saps,            ! logical to include empirical SAPS
      |  doEclipse,       ! logical to do eclipse mask or not
      |  oneway,          ! logical to use oneway mix reader
-     |  duff             ! logical to choose reaction rate for N(2D)+O2->NO+O
+     |  duff,            ! logical to choose reaction rate for N(2D)+O2->NO+O
+     |  use_cusp,        ! logical to include polar cusp precipitation
+     |  use_drizzle,     ! logical to include polar drizzle precipitation
+     |  use_soft         ! logical to include soft/high-altitude aurora (alfa2)
 !
 ! Parameters as read from namelist:
       real(rp) :: rd_power,rd_ctpoten,rd_f107,rd_f107a,rd_bximf,
@@ -209,6 +212,7 @@
      |  f107a_time,hpss_path,current_pg,current_kq,calc_helium,
      |  bgrddata_ncfile,ctmt_ncfile,electron_heating,duff,
      |  amienh,amiesh,amie_ibkg,he_coefs_ncfile,enforce_n2,et,saps,
+     |  use_cusp,use_drizzle,use_soft,
      |  subaur_data,doEclipse,eclipse_list,oneway,mixfile,
      |  srcindices_imf_file,srcindices_ae_file,srcindices_hpi_file,
      |  nudge_ncpre,nudge_ncfile,nudge_ncpost,nudge_flds,
@@ -334,6 +338,9 @@
       doEclipse = .false.
       oneway = .false.
       duff = .false.
+      use_cusp = .true.
+      use_drizzle = .true.
+      use_soft = .true.
 
       opdiffcap = spval
       opdiffrate = spval

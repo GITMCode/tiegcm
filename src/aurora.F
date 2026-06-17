@@ -495,7 +495,8 @@
      |  sunlons,     ! sun's mag longitudes (see sub sunloc, magfield.F)
      |  csdec,sndec
       use params_module,only: nlon,spval,glat,nmlon,nmlat
-      use input_module,only: iamie,aurora_model
+      use input_module,only: iamie,aurora_model,use_cusp,use_drizzle,
+     | use_soft
       use cons_module,only: pi,dtr,ylatm,ylonm,dlonm
       use amie_module,only: ekvg,efxg
       use mage_coupling_module,only: geng,gflx     !MAGE
@@ -763,6 +764,10 @@
         enddo
       endif
 #endif
+      if (.not. use_cusp)    cusp (lon0:lon1,lat0:lat1) = 0.
+      if (.not. use_drizzle) drizl(lon0:lon1,lat0:lat1) = 0.
+      if (.not. use_soft)    flux2(lon0:lon1,lat0:lat1) = 0.
+
       call addfld('EFLUX_AUR','Aurora energy flux','ergs/cm2/s',
      |  eflux(lon0:lon1,lat0:lat1),'lon',lon0,lon1,'lat',lat0,lat1,0)
 !
