@@ -22,7 +22,7 @@ contains
     else
       call ie%aurora_model('zero')
     endif
-    call ie%model_dir("../ext/Electrodynamics/data/ext/")
+    call ie%model_dir("ie_data/")
     call ie%init()
 
     if (aurora_model /= 'emery' .and. ie%iAurora_ == -1) then

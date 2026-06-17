@@ -167,15 +167,24 @@ def _write_make_env(builddir, make_fragment, srcdir, exe_path,
         f.write(content)
 
 
-def _write_root_makefile(tiegcmhome, tiegcmdata, gswm_res):
+def _write_root_makefile(tiegcmhome, tiegcmdata, gswm_res, havemile=False):
     template_path = os.path.join(tiegcmhome, "scripts", "Makefile.tmpl")
     with open(template_path, "r") as f:
         template = f.read()
 
+    if havemile:
+        ie_data_line = (
+            "\tln -sfn $(TIEGCMHOME)/ext/Electrodynamics/data/ext"
+            "                               $(NAME)/ie_data"
+        )
+    else:
+        ie_data_line = ""
+
     content = template.format(
         tiegcmhome=tiegcmhome,
         tiegcmdata=tiegcmdata,
-        gswm_res=gswm_res
+        gswm_res=gswm_res,
+        ie_data_line=ie_data_line,
     )
 
     with open(os.path.join(tiegcmhome, "Makefile"), "w") as f:
@@ -302,7 +311,7 @@ def configure(args):
         haveindices, _TIEGCMHOME
     )
     gswm_res = f"{horires}d"
-    _write_root_makefile(_TIEGCMHOME, tiegcmdata, gswm_res)
+    _write_root_makefile(_TIEGCMHOME, tiegcmdata, gswm_res, havemile=havemile)
 
     print("Configured TIEGCM:")
     print(f"  Compiler   : {compiler}  ({make_fragment})")
