@@ -27,6 +27,12 @@ contains
     call ie%model_dir("../ext/Electrodynamics/data/ext/")
     call ie%init()
 
+    if (aurora_model /= 'emery' .and. ie%iAurora_ == -1) then
+      write(6,"(/,'>>> MILE: unrecognized aurora_model: ',a)") trim(aurora_model)
+      write(6,"('Valid options (with HAVEMILE): fre, fta, hpi, pem, zero, amie')")
+      call shutdown('aurora_model')
+    endif
+
 #ifdef HAVEINDICES
     if (len_trim(srcindices_imf_file) > 0) &
       call init_imf(trim(srcindices_imf_file))
