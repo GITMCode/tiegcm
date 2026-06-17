@@ -108,7 +108,6 @@ ifeq ($(HAVEMILE),TRUE)
   LIBS     += -L$(IEDIR)/lib -lIE
 endif
 ifeq ($(HAVEINDICES),TRUE)
-  CPPFLAGS += -DHAVEINDICES
   INC_DIRS += -I$(IODIR)/src
   LIBS     += -L$(IODIR)/lib -lIO
 endif

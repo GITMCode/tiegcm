@@ -1,6 +1,7 @@
 module ModIETIEGCM
 #ifdef HAVEMILE
   use ModIE
+  use ModIndices, only: init_imf, init_ae, init_hpi, get_index, get_nValues, set_time
   use params_module, only: nmlon, nmlonp1, nmlat, spval
   implicit none
 
@@ -12,9 +13,6 @@ contains
     use input_module, only: potential_model, aurora_model, &
                              srcindices_imf_file, srcindices_ae_file, &
                              srcindices_hpi_file
-#ifdef HAVEINDICES
-    use ModIndices, only: init_imf, init_ae, init_hpi
-#endif
     implicit none
 
     ie = iemodel()
@@ -33,7 +31,6 @@ contains
       call shutdown('aurora_model')
     endif
 
-#ifdef HAVEINDICES
     if (len_trim(srcindices_imf_file) > 0) &
       call init_imf(trim(srcindices_imf_file))
     if (len_trim(srcindices_ae_file) > 0) then
@@ -46,7 +43,6 @@ contains
     elseif (len_trim(srcindices_hpi_file) > 0) then
       call init_hpi(trim(srcindices_hpi_file))
     endif
-#endif
 
   end subroutine init_ie
 
@@ -57,15 +53,10 @@ contains
     use input_module, only: power, kp, byimf, bzimf, swvel, swden
     use init_module, only: iyear, iday, uthr
     use wei05sc, only: cvt2md
-#ifdef HAVEINDICES
-    use ModIndices, only: get_index, get_nValues, set_time
-#endif
     implicit none
     real, intent(in), optional :: byimf_in, bzimf_in, swvel_in, swden_in
     integer :: imo, ida, ihour, imin, isec
-#ifdef HAVEINDICES
     real :: val
-#endif
 
     call cvt2md(6, iyear, iday, imo, ida)
     ihour = int(uthr)
@@ -74,8 +65,6 @@ contains
 
     ! Time must be set before check_indices fires inside get_potential
     call ie%time_ymdhms(iyear, imo, ida, ihour, imin, isec)
-
-#ifdef HAVEINDICES
     call set_time(iyear, imo, ida, ihour, imin, isec)
 
     if (get_nValues('imfby') > 0) then
@@ -122,14 +111,6 @@ contains
       call get_index('au', val); ie%needAu = val
       call get_index('al', val); ie%needAl = val
     endif
-#else
-    if (present(byimf_in)) ie%needImfBy = byimf_in
-    if (present(bzimf_in)) ie%needImfBz = bzimf_in
-    if (present(swvel_in)) ie%needSwV   = swvel_in
-    if (present(swden_in)) ie%needSwN   = swden_in
-    ie%needHpN = power
-    ie%needHpS = power
-#endif
 
     if (kp /= spval) ie%needKp = kp
 
@@ -147,7 +128,6 @@ contains
     real, allocatable :: potential(:, :)
     real, intent(in), optional :: byimf_in, bzimf_in, swvel_in, swden_in
 
-    ! Set indices and time before calling get_potential
     call set_ie_indices(byimf_in, bzimf_in, swvel_in, swden_in)
 
     ! Update grid dynamically because MLT changes with time 'sunlons'
