@@ -329,7 +329,7 @@ def configure(args):
         print(f"  TIEGCMDATA : {tiegcmdata}")
     else:
         print("  TIEGCMDATA : (not found — placeholder set in Makefile)")
-        print("  WARNING: TIEGCMDATA not found. Either edit Makefile directly,")
+        print("\n  WARNING: TIEGCMDATA not found. Either edit Makefile directly,")
         print("           or pass it when creating run:  make rundir TIEGCMDATA=/path/to/tiegcmdata")
     print(f"  Debug={debug}  Coupling={coupling}  HIDRA={hidra}  HAVEMILE={havemile}")
     if defs_changed:
