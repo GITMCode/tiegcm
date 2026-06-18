@@ -2114,8 +2114,8 @@
           write(6,"(/,'>>> INPUT: unknown potential_model: ',a)")
      |      trim(potential_model)
           write(6,"('potential_model can be one of the following:')")
-          write(6,"('''HEELIS''',',','''WEIMER01''',',',
-     |      '''WEIMER05''',',','''WEIMER''',',','''AMIE''',',','''NONE''')")
+          write(6,"(a)")
+     |      "'HEELIS','WEIMER01','WEIMER05','WEIMER','AMIE','NONE'"
           call shutdown('POTENTIAL_MODEL')
       end select
 !
