@@ -590,11 +590,14 @@
 !
 ! If an amie run, use tiepot from amie.F:
 ! (phihm and tiepot are dimensioned (nmlonp1,nmlat))
+! With HAVEMILE, potential_model='AMIE' routes through update_ie_potential above.
+#ifndef HAVEMILE
       if (iamie > 0) then
         phihm = tiepot ! whole array op
         call fminmax(phihm,nmlonp1*nmlat,fmin,fmax)
         write(6,"('Advance: amie phihm min,max=',2e12.4)") fmin,fmax
       endif
+#endif
 !
 ! Set pfrac for dynamo, regardless of potential_model (in colath.F): 
       call colath

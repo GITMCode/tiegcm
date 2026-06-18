@@ -12,17 +12,29 @@ contains
   subroutine init_ie()
     use input_module, only: potential_model, aurora_model, &
                              srcindices_imf_file, srcindices_ae_file, &
-                             srcindices_hpi_file
+                             srcindices_hpi_file, &
+                             amie_ie_north, amie_ie_south
     implicit none
 
     ie = iemodel()
-    call ie%efield_model(potential_model)
+    call ie%efield_model(trim(potential_model))
+
     if (aurora_model /= 'emery') then
       call ie%aurora_model(aurora_model)
     else
       call ie%aurora_model('zero')
     endif
     call ie%model_dir("ie_data/")
+
+    ! Pass binary AMIE files before init() when either model uses them
+    if (trim(potential_model) == 'AMIE' .or. &
+        trim(aurora_model)    == 'amie') then
+      if (len_trim(amie_ie_north) > 0) &
+        call ie%filename_north(trim(amie_ie_north))
+      if (len_trim(amie_ie_south) > 0) &
+        call ie%filename_south(trim(amie_ie_south))
+    endif
+
     call ie%init()
 
     if (aurora_model /= 'emery' .and. ie%iAurora_ == -1) then

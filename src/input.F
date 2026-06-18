@@ -156,6 +156,10 @@
      |  srcindices_ae_file,  ! srcIndices AE/AU/AL SME data file
      |  srcindices_hpi_file  ! srcIndices NOAA hemispheric power file
 
+      character(len=mxlen_filename) ::
+     |  amie_ie_north, ! Electrodynamics AMIE NH unformatted binary file
+     |  amie_ie_south  ! Electrodynamics AMIE SH unformatted binary file
+
 !     integer,parameter :: ngpivars = 4
 !     real :: gpi_vars(ngpivars) ! f107,f107a,power,ctpoten
 !     character(len=16) ::
@@ -215,6 +219,7 @@
      |  use_cusp,use_drizzle,use_soft,
      |  subaur_data,doEclipse,eclipse_list,oneway,mixfile,
      |  srcindices_imf_file,srcindices_ae_file,srcindices_hpi_file,
+     |  amie_ie_north,amie_ie_south,
      |  nudge_ncpre,nudge_ncfile,nudge_ncpost,nudge_flds,
      |  nudge_lbc,nudge_f4d,nudge_use_refdate,nudge_refdate,
      |  nudge_sponge,nudge_delta,nudge_power,nudge_alpha,
@@ -307,6 +312,8 @@
       srcindices_imf_file = ' '
       srcindices_ae_file  = ' '
       srcindices_hpi_file = ' '
+      amie_ie_north = ' '
+      amie_ie_south = ' '
 !
       start_day  = ispval
       start_year = ispval
@@ -1588,8 +1595,14 @@
      |    trim(weimer_ncfile)
       if (trim(potential_model)=='WEIMER'.or.
      |    trim(potential_model)=='WEIMER05')
-     |  write(6,"('  weimer coefs: wei05sc_ncfile = ',a)") 
+     |  write(6,"('  weimer coefs: wei05sc_ncfile = ',a)")
      |    trim(wei05sc_ncfile)
+      if (len_trim(amie_ie_north) > 0)
+     |  write(6,"('  AMIE IE NH file: amie_ie_north = ',a)")
+     |    trim(amie_ie_north)
+      if (len_trim(amie_ie_south) > 0)
+     |  write(6,"('  AMIE IE SH file: amie_ie_south = ',a)")
+     |    trim(amie_ie_south)
 
       if (len_trim(gpi_ncfile) > 0)
      |  write(6,"('  gpi run: gpi_ncfile = ',a)") trim(gpi_ncfile)  
@@ -2099,7 +2112,7 @@
      |      trim(potential_model)
           write(6,"('potential_model can be one of the following:')")
           write(6,"('''HEELIS''',',','''WEIMER01''',',',
-     |      '''WEIMER05''',',','''WEIMER''',',','''NONE''')")
+     |      '''WEIMER05''',',','''WEIMER''',',','''AMIE''',',','''NONE''')")
           call shutdown('POTENTIAL_MODEL')
       end select
 !
