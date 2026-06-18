@@ -78,7 +78,7 @@ libIE:
 endif
 ifeq ($(HAVEINDICES),TRUE)
 EXT_LIBS += libIO
-libIO:
+libIO: $(filter libIE,$(EXT_LIBS))
 	$(MAKE) -C $(IODIR) LIB
 endif
 
@@ -105,11 +105,13 @@ endif
 ifeq ($(HAVEMILE),TRUE)
   CPPFLAGS += -DHAVEMILE
   INC_DIRS += -I$(IEDIR)/src
-  LIBS     += -L$(IEDIR)/lib -lIE
 endif
 ifeq ($(HAVEINDICES),TRUE)
   INC_DIRS += -I$(IODIR)/src
   LIBS     += -L$(IODIR)/lib -lIO
+endif
+ifeq ($(HAVEMILE),TRUE)
+  LIBS     += -L$(IEDIR)/lib -lIE
 endif
 ifeq ($(OS),Linux)
   CPPFLAGS := -DLINUX $(CPPFLAGS)

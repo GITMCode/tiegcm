@@ -293,12 +293,17 @@ def configure(args):
 
     os.makedirs(builddir, exist_ok=True)
 
-    for fname in [make_fragment, "Makefile", "mkdepends"]:
-        dest = os.path.join(builddir, fname)
-        if not os.path.isfile(dest):
-            src = os.path.join(utildir, fname)
-            if os.path.isfile(src):
-                shutil.copy(src, dest)
+    for fname in ["Makefile", "mkdepends"]:
+        src = os.path.join(utildir, fname)
+        if os.path.isfile(src):
+            shutil.copy(src, os.path.join(builddir, fname))
+
+    # Machine file may have user edits (custom FFLAGS etc.) — only copy if absent
+    dest = os.path.join(builddir, make_fragment)
+    if not os.path.isfile(dest):
+        src = os.path.join(utildir, make_fragment)
+        if os.path.isfile(src):
+            shutil.copy(src, dest)
 
     _configure_mile(havemile, _TIEGCMHOME, utildir)
     _configure_indices(haveindices, _TIEGCMHOME, utildir)
