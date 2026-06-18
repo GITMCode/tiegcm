@@ -2,7 +2,7 @@
 # re-run  python config.py --horires <deg>  to update.
 
 TIEGCMHOME = {tiegcmhome}
-TIEGCMDATA = {tiegcmdata}
+TIEGCMDATA ?= {tiegcmdata}
 GSWM_RES   = {gswm_res}
 NAME      ?= run
 
@@ -15,6 +15,12 @@ clean:
 	cd $(TIEGCMHOME)/build && make clean
 
 rundir:
+	@if [ "$(TIEGCMDATA)" = "/path/to/tiegcmdata" ]; then \
+		echo "Error: TIEGCMDATA is not set."; \
+		echo "  Pass it on the command line:  make rundir TIEGCMDATA=/path/to/tiegcmdata"; \
+		echo "  Or edit TIEGCMDATA in Makefile directly."; \
+		exit 1; \
+	fi
 	mkdir -p $(NAME)
 	@if [ -f $(TIEGCMHOME)/build/tiegcm.exe ]; then \
 		ln -sfn $(TIEGCMHOME)/build/tiegcm.exe $(NAME)/tiegcm.exe; \

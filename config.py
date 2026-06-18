@@ -80,6 +80,9 @@ def _detect_compiler(arg):
     )
 
 
+_TIEGCMDATA_PLACEHOLDER = "/path/to/tiegcmdata"
+
+
 def _resolve_tiegcmdata(arg):
     if arg:
         p = os.path.realpath(os.path.expanduser(arg))
@@ -92,10 +95,7 @@ def _resolve_tiegcmdata(arg):
     candidate = os.path.join(_TIEGCMHOME, "tiegcmdata")
     if os.path.isdir(candidate):
         return os.path.realpath(candidate)
-    sys.exit(
-        "Error: TIEGCMDATA not set and no tiegcmdata/ directory found.\n"
-        "       Set $TIEGCMDATA or pass --tiegcmdata <dir>."
-    )
+    return None
 
 
 def _read_make_env(builddir):
@@ -277,6 +277,9 @@ def configure(args):
     havemile     = bool(args.havemile)
     haveindices  = havemile
     tiegcmdata = _resolve_tiegcmdata(getattr(args, "tiegcmdata", None))
+    tiegcmdata_found = tiegcmdata is not None
+    if not tiegcmdata_found:
+        tiegcmdata = _TIEGCMDATA_PLACEHOLDER
 
     if horires not in _RES_TABLE:
         sys.exit(
@@ -322,7 +325,12 @@ def configure(args):
     print(f"  Compiler   : {compiler}  ({make_fragment})")
     print(f"  Resolution : {horires} deg horizontal / {res['vertres']} deg vertical")
     print(f"  ZITOP      : {zitop}  (log-pressure level)")
-    print(f"  TIEGCMDATA : {tiegcmdata}")
+    if tiegcmdata_found:
+        print(f"  TIEGCMDATA : {tiegcmdata}")
+    else:
+        print("  TIEGCMDATA : (not found — placeholder set in Makefile)")
+        print("  WARNING: TIEGCMDATA not found. Either edit Makefile directly,")
+        print("           or pass it when creating run:  make rundir TIEGCMDATA=/path/to/tiegcmdata")
     print(f"  Debug={debug}  Coupling={coupling}  HIDRA={hidra}  HAVEMILE={havemile}")
     if defs_changed:
         print("  >> Resolution changed — run  make clean  before rebuilding.")
