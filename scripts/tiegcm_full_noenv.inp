@@ -1,0 +1,253 @@
+&tgcm_input
+
+! Full TIEGCM namelist reference -- every namelist option with documentation.
+! No $TGCMDATA needed; all paths are relative to the run directory.
+! Active settings reflect a quiet-time Heelis run at 2.5-degree resolution.
+! Commented-out lines show alternatives, optional parameters, or off-by-default features.
+
+! -----------------------------------------------------------------------
+! Run identity and calendar
+! -----------------------------------------------------------------------
+ LABEL          = 'tiegcm'        ! optional text label written to output files
+ START_YEAR     = 2002
+ START_DAY      = 80
+ CALENDAR_ADVANCE = 1             ! 1 = advance calendar; 0 = perpetual day
+
+! -----------------------------------------------------------------------
+! Restart / source file
+! -----------------------------------------------------------------------
+ SOURCE         = 'CHANGEME'      ! path to initial-condition (restart) netCDF file
+ SOURCE_START   = 80 0 0 0        ! day hh mm ss of the record to read from SOURCE
+
+! -----------------------------------------------------------------------
+! Primary history output
+! -----------------------------------------------------------------------
+ PRISTART  = 80 0 0 0             ! day hh mm ss to start writing
+ PRISTOP   = 81 0 0 0             ! day hh mm ss to stop
+ PRIHIST   = 1 0 0 0              ! output interval
+ STEP      = 30                   ! dynamical timestep (seconds)
+ NSTEP_SUB = 10                   ! electrodynamics sub-steps per STEP
+ OUTPUT    = 'tiegcm_prim_001.nc'
+ MXHIST_PRIM = 10                 ! max histories per output file before rolling over
+
+! -----------------------------------------------------------------------
+! Secondary history output
+! -----------------------------------------------------------------------
+ SECSTART    = 80 1 0 0
+ SECSTOP     = 81 0 0 0
+ SECHIST     = 0 1 0 0            ! output interval (1 hour shown)
+ SECOUT      = 'tiegcm_sech_001.nc'
+ MXHIST_SECH = 24
+ SECH_NBYTE  = 4                  ! bytes per float in secondary histories (4 or 8)
+ SECFLDS = 'TN' 'UN' 'VN' 'WN' 'O2' 'O1' 'N2' 'NO' 'N4S' 'HE' 'NE'
+           'TE' 'TI' 'TEC' 'O2P' 'OP' 'POTEN' 'UI_ExB' 'VI_ExB'
+           'WI_ExB' 'DEN' 'QJOULE' 'HMF2' 'NMF2' 'Z' 'ZG'
+
+! -----------------------------------------------------------------------
+! MPI decomposition (usually set automatically; override only if needed)
+! -----------------------------------------------------------------------
+! NTASK_LON = 4   ! MPI tasks in longitude dimension
+! NTASK_LAT = 4   ! MPI tasks in latitude dimension
+
+! -----------------------------------------------------------------------
+! Tidal boundary forcing (GSWM)
+! Filenames are resolution-specific: 2.5d, 1.25d variants exist.
+! -----------------------------------------------------------------------
+ GSWM_MI_DI_NCFILE  = 'tiegcmdata/boundary_files/GSWM/gswm_diurn_2.5d_99km.nc'
+ GSWM_MI_SDI_NCFILE = 'tiegcmdata/boundary_files/GSWM/gswm_semi_2.5d_99km.nc'
+ GSWM_NM_DI_NCFILE  = 'tiegcmdata/boundary_files/GSWM/gswm_nonmig_diurn_2.5d_99km.nc'
+ GSWM_NM_SDI_NCFILE = 'tiegcmdata/boundary_files/GSWM/gswm_nonmig_semi_2.5d_99km.nc'
+
+! Alternatively, provide explicit tide amplitudes/phases instead of GSWM files:
+! TIDE(10)   = 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.  ! semidiurnal: 5 amp + 5 phase pairs
+! TIDE2(2)   = 0. 0.                             ! diurnal: amplitude, phase
+! TIDE3M3(2) = 0. 0.                             ! 2-day wave: amplitude, phase
+
+! SABER_NCFILE  = '/path/to/saber_data.nc'  ! SABER T,Z observations for LBC
+! TIDI_NCFILE   = '/path/to/tidi_data.nc'   ! TIDI wind observations for LBC
+! BGRDDATA_NCFILE = '/path/to/bgrd.nc'      ! background climatology data
+! CTMT_NCFILE   = '/path/to/ctmt.nc'        ! CTMT tidal climatology for LBC
+
+! -----------------------------------------------------------------------
+! Helium upper boundary
+! sres = 2.5 deg (36 lats), dres = 1.25 deg (72 lats); must match horires.
+! If omitted, code auto-selects via $TGCMDATA -- set explicitly here.
+! -----------------------------------------------------------------------
+ HE_COEFS_NCFILE = 'tiegcmdata/he_coefs_sres.nc'
+! HE_COEFS_NCFILE = 'tiegcmdata/he_coefs_dres.nc'  ! for 1.25-deg runs
+ CALC_HELIUM = 1
+
+! -----------------------------------------------------------------------
+! Dynamics switches
+! -----------------------------------------------------------------------
+ DYNAMO   = 1                ! 1 = calculate ionospheric dynamo (default)
+ EDDY_DIF = 0                ! 0 = constant eddy diffusion (default)
+                             ! 1 = DOY-dependent eddy diffusion (difk, dift, xmue)
+
+! -----------------------------------------------------------------------
+! Electric potential model
+! Options: HEELIS, WEIMER05 (= WEIMER), AMIE, NONE
+! -----------------------------------------------------------------------
+ POTENTIAL_MODEL = 'HEELIS'
+! POTENTIAL_MODEL = 'WEIMER05'
+! POTENTIAL_MODEL = 'AMIE'
+! POTENTIAL_MODEL = 'NONE'    ! zero high-lat convection
+
+! Weimer coefficient file (required for WEIMER05; default uses $TGCMDATA)
+! WEI05SC_NCFILE = 'tiegcmdata/wei05sc.nc'
+
+! -----------------------------------------------------------------------
+! Auroral model
+! 'emery'  -- Roble-Ridley / Emery parameterization (built-in, default)
+! 'fre'    -- Fuller-Rowell/Evans (Electrodynamics library, MILE branch)
+! 'fta'    -- FTA model            (Electrodynamics library)
+! 'hpi'    -- NOAA HPI-driven      (Electrodynamics library)
+! 'pem'    -- PEM model            (Electrodynamics library)
+! 'zero'   -- no aurora            (Electrodynamics library)
+! 'amie'   -- AMIE binary files    (Electrodynamics library)
+! -----------------------------------------------------------------------
+ AURORA_MODEL = 'emery'
+! AURORA_MODEL = 'fre'
+
+ AURORA    = 1               ! 0/1 flag to enable aurora entirely
+
+! Auroral precipitation sub-components (all default .true.):
+ USE_CUSP    = .true.        ! polar cusp precipitation
+ USE_DRIZZLE = .true.        ! polar drizzle precipitation
+ USE_SOFT    = .true.        ! soft / high-altitude low-energy electrons (alfa2)
+
+! -----------------------------------------------------------------------
+! Heelis driving parameters (ignored when POTENTIAL_MODEL != HEELIS)
+! -----------------------------------------------------------------------
+ POWER   = 18.               ! hemispheric power (GW)
+ CTPOTEN = 30.               ! cross-tail potential (kV)
+
+! -----------------------------------------------------------------------
+! Heating and collision scaling factors
+! -----------------------------------------------------------------------
+ COLFAC   = 1.5              ! ion-neutral collision factor (default 1.5)
+ JOULEFAC = 1.5              ! Joule heating scaling factor (default 1.5)
+ ELECTRON_HEATING = 6        ! electron heating formula: 6=Swartz&Nisbet(1972) (default),
+                             !   4=older formula
+ ET = .false.                ! electron turbulent heating
+
+! Ion/electron temperature caps (K); raise if model blows up at high activity
+ TE_CAP = 10000.
+ TI_CAP = 10000.
+
+! -----------------------------------------------------------------------
+! Additional current diagnostics
+! -----------------------------------------------------------------------
+ CURRENT_PG = 1              ! add plasma pressure+gravity current to RHS (default on)
+ CURRENT_KQ = 0              ! calculate height-integrated current density (default off)
+
+! -----------------------------------------------------------------------
+! Solar / geomagnetic indices
+!
+! Option A: constant scalars (shown below -- quiet-time solar min)
+! Option B: time-varying from a GPI file (provides f10.7, Kp, power)
+!   GPI_NCFILE = 'tiegcmdata/gpi_1950001-2100365.nc'
+! Option C: time-varying IMF/SW from file (drives Weimer directly)
+!   IMF_NCFILE = '/path/to/imf_data.nc'
+! Option D: srcIndices files (AE, HPI, IMF/SW -- MILE branch)
+!   SRCINDICES_IMF_FILE = '/path/to/imf.nc'
+!   SRCINDICES_AE_FILE  = '/path/to/ae.nc'
+!   SRCINDICES_HPI_FILE = '/path/to/hpi.nc'
+!
+! INDICES_INTERP = 1         ! 1 = interpolate time-dependent indices (default)
+! -----------------------------------------------------------------------
+ F107  = 70.
+ F107A = 70.
+
+! Weimer/Heelis IMF/SW scalars (used when IMF_NCFILE is not set):
+ BXIMF = 0.0
+ BYIMF = 5.0
+ BZIMF = -5.0
+ SWVEL = 400.
+ SWDEN = 4.0
+ KP    = 1.0                 ! Kp index (used by some aurora parameterizations)
+ AL    = -100.               ! AL index in nT (used by Weimer 2001)
+
+! Time-varying index arrays -- each entry is: day hh mm ss value
+! (uncomment and populate to override scalar values above)
+! F107_TIME    = 80 0 0 0 70.   81 0 0 0 75.
+! F107A_TIME   = 80 0 0 0 70.   81 0 0 0 75.
+! POWER_TIME   = 80 0 0 0 18.   81 0 0 0 20.
+! CTPOTEN_TIME = 80 0 0 0 30.   81 0 0 0 35.
+! BYIMF_TIME   = 80 0 0 0 5.    81 0 0 0 3.
+! BZIMF_TIME   = 80 0 0 0 -5.   81 0 0 0 -3.
+! BXIMF_TIME   = 80 0 0 0 0.
+! SWVEL_TIME   = 80 0 0 0 400.
+! SWDEN_TIME   = 80 0 0 0 4.
+! KP_TIME      = 80 0 0 0 1.0
+! AL_TIME      = 80 0 0 0 -100.
+
+! SEE solar flux data (replaces F107/F107A if provided):
+! SEE_NCFILE = '/path/to/see_data.nc'
+
+! -----------------------------------------------------------------------
+! AMIE (legacy text-file interface; for binary AMIE see MILE/Electrodynamics)
+! -----------------------------------------------------------------------
+! AMIENH   = '/path/to/amie_north.asc'  ! NH AMIE text data file
+! AMIESH   = '/path/to/amie_south.asc'  ! SH AMIE text data file
+! AMIE_IBKG = 0  ! 0=real-time data, 1=first record only, 2=24-hr average
+
+! AMIE binary files for Electrodynamics library (MILE branch):
+! AMIE_IE_NORTH = '/path/to/amie_north.bin'
+! AMIE_IE_SOUTH = '/path/to/amie_south.bin'
+
+! -----------------------------------------------------------------------
+! SAPS empirical model
+! SUBAUR_DATA is always path-expanded by the code -- provide path here
+! to avoid needing $TGCMDATA even when SAPS is disabled.
+! -----------------------------------------------------------------------
+ SUBAUR_DATA = 'tiegcmdata/subaur_data.nc'
+ SAPS = .false.
+
+! -----------------------------------------------------------------------
+! Eclipse masking (only reads file if DOECLIPSE=.true.)
+! -----------------------------------------------------------------------
+! ECLIPSE_LIST = 'tiegcmdata/eclipse_list.nc'
+ DOECLIPSE = .false.
+
+! -----------------------------------------------------------------------
+! Magnetosphere coupler (MIX/SWMF one-way coupling)
+! -----------------------------------------------------------------------
+! MIXFILE = 'msphere.mix.h5'  ! default; MIX output file from magnetosphere model
+! ONEWAY  = .false.            ! .true. = read MIX file but don't feed back
+
+! -----------------------------------------------------------------------
+! Nudging (relax model toward reanalysis or obs)
+! -----------------------------------------------------------------------
+! NUDGE_NCPRE  = '/path/to/pre.nc'       ! file before current time window
+! NUDGE_NCFILE = '/path/to/nudge.nc'     ! main nudging data file(s)
+! NUDGE_NCPOST = '/path/to/post.nc'      ! file after current time window
+! NUDGE_FLDS   = 'TN' 'UN' 'VN'         ! fields to nudge
+! NUDGE_LBC    = .false.                 ! nudge lower boundary condition
+! NUDGE_F4D    = .false.                 ! nudge 4D fields
+! NUDGE_USE_REFDATE = .false.            ! use reference date for nudging
+! NUDGE_REFDATE  = 2002 80               ! year, day of reference date
+! NUDGE_SPONGE   = 0. 0.                ! sponge layer weights (2 values)
+! NUDGE_DELTA    = 1. 1.                ! nudging time scales (2 values; default 1)
+! NUDGE_POWER    = 1. 1.                ! nudging power (2 values; default 1)
+! NUDGE_ALPHA    = 0.                   ! global nudging coefficient (default 0)
+
+! -----------------------------------------------------------------------
+! O+ diffusion and floor controls (all off by default)
+! Used to prevent O+ from going negative or diffusing too fast.
+! -----------------------------------------------------------------------
+! OPDIFFCAP  = 0.    ! max O+ diffusion (0 = off)
+! OPDIFFRATE = 0.    ! vertical decay rate of O+ diffusion cap
+! OPDIFFLEV  = 0.    ! transition altitude of O+ diffusion cap
+! OPFLOOR    = 0.    ! minimum O+ density (0 = off)
+! OPRATE     = 0.    ! vertical decay rate of O+ floor
+! OPLEV      = 0.    ! transition altitude of O+ floor
+! OPLATWIDTH = 0.    ! latitude band to apply O+ floor (0 = off)
+
+! -----------------------------------------------------------------------
+! Miscellaneous physics flags
+! -----------------------------------------------------------------------
+ ENFORCE_N2 = .false.        ! correct N2 altitude profile to maintain consistency
+ DUFF = .false.              ! use alternate reaction rate for N(2D)+O2->NO+O
+
+/
