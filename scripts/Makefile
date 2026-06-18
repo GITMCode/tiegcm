@@ -29,7 +29,7 @@ INC_DIRS  := $(foreach dir,$(DIRS),-I$(dir))
 SOURCES   := $(shell cat Srcfiles)
 OBJS      := $(addsuffix .o, $(basename $(SOURCES)))
 # LIBS may be specified in Make.machine file, so append here
-LIBS      += -lnetcdff
+LIBS      += -lnetcdff -lnetcdf
 FC        := $(MPIF90)
 
 # Add ESMF stuff
