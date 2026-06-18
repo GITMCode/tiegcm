@@ -224,7 +224,8 @@
      |  nudge_lbc,nudge_f4d,nudge_use_refdate,nudge_refdate,
      |  nudge_sponge,nudge_delta,nudge_power,nudge_alpha,
      |  opdiffcap,opdiffrate,opdifflev,opfloor,oprate,oplev,oplatwidth,
-     |  te_cap,ti_cap
+     |  te_cap,ti_cap,
+     |  wei05sc_ncfile
 !
 ! List of fields that are always written to secondary histories:
       character(len=16) :: secflds_mandatory(6) =
@@ -291,9 +292,11 @@
       see_ncfile  = ' '       ! solar flux data (see module in soldata.F)
 !
       imf_ncfile = ' '        ! user input imf data file, used to drive weimer
-      write(weimer_ncfile ,"('$TGCMDATA/weimer2001_coeffs.nc')")
+
+      ! Weimer 2001 is not in the code anymore...
+      ! write(weimer_ncfile ,"('$TGCMDATA/weimer2001_coeffs.nc')")
       write(wei05sc_ncfile,"('$TGCMDATA/wei05sc.nc')")
-!
+
       gswm_mi_di_ncfile = ' ' ! diurnal tide: user input gswm file path
       gswm_mi_sdi_ncfile= ' ' ! semidiurnal tide: user input gswm file path
       gswm_nm_di_ncfile= ' '  ! nonmigrating diurnal tide: user input gswm file path

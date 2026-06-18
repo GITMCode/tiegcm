@@ -44,6 +44,7 @@ potentials are <3% different.
   - Changed settings in the code now will be reflected in *each* run directory
     automatically
   - Automatically symlinks `tiegcmdata/` if it is in `$PWD` or set as env-var.
+- Auto-clones Electrodynamics & srcIndices if `--mile`
 
 ### Electrodynamics changes
 
@@ -82,6 +83,7 @@ potentials are <3% different.
     values of `wei05sc_loc`
 - If `auroral_model` is *not* Emery, all aurora code is still executed. Cusp, drizzle,
   saps all rely on values set by Weimer or `aurora_cons`
+  - NEW: Add optio to toggle cusp, drizzle, low-energy -e to input.F
 
 
 ## Validation
@@ -99,11 +101,6 @@ potentials are <3% different.
 
 ## Known remaining issues:
 
-- ~~Weimer paths still require `$TIEGCMDATA` be set~~ — fixed, now uses relative `tiegcmdata/` path
-- No AE/AU/AL reader (yet)
-- If potential model is `weimer`, `Weimer` or `weimer05` (not `WEIMER05`), TIEGCM will
-  use Emery boundaries in aurora (cusp, drizzle, saps), ***not*** Weimer boundaries. Not
-  changed due to Weimer01 remnants.
 - No Electrodynamics AMIE. Probably fine. Only diffuse electron precipitation is
   supported from Ovation. TIEGCM assumes all auroral precipitation are electrons with a
   maxwellian distribution, so monoenergetic/wave/ion precipitation are not implemented.
