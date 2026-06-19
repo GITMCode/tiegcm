@@ -21,7 +21,7 @@
       use heelis_module,only: heelis
       use wei05sc,only: weimer05        ! Weimer 2005 model
 #ifdef HAVEMILE
-      use ModIETIEGCM, only: update_ie_potential
+      use ModIETIEGCM, only: update_ie_potential, sync_srcindices_imf
 #endif
       use input_module,only: pristart,step,idynamo=>dynamo,
      |  calendar_advance,gpi_ncfile,potential_model,wei05sc_ncfile,
@@ -278,6 +278,11 @@
         if (istep==1) iprint = 1
         call getimf(iyear,iday,int(secs),istep)
       endif
+#ifdef HAVEMILE
+! Sync srcIndices IMF/SW into module vars so native wei05sc sees same
+! values as update_ie_potential (both Weimsers get consistent indices).
+      call sync_srcindices_imf()
+#endif
 !
 ! If the potential model is Weimer and power was not provided
 ! by namelist, then calculate power from bz and swvel.

@@ -2269,7 +2269,10 @@
         endif
 !
 ! Weimer non-imf data run:
-        if (len_trim(imf_ncfile)==0) then
+! srcindices_imf_file supplies IMF/SW at runtime via srcIndices, so
+! namelist scalars are not required when it is set.
+        if (len_trim(imf_ncfile)==0 .and.
+     |      len_trim(srcindices_imf_file)==0) then
 !
 ! User must provide bx,by,bz,swden,swvel,f107,f107a for non-IMF data run:
 ! (if power is not provided, it will be calculated from bzimf,swvel)

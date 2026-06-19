@@ -58,6 +58,40 @@ contains
 
   end subroutine init_ie
 
+  ! Read srcIndices IMF/SW and write back to TIEGCM module vars so that
+  ! native wei05sc.F sees the same values as update_ie_potential.
+  ! Called from advance.F alongside the getimf block, before wei05sc.
+  subroutine sync_srcindices_imf()
+    use input_module, only: byimf, bzimf, swvel, swden, srcindices_imf_file
+    use ModIndices, only: get_index, get_nValues, set_time
+    use init_module, only: iyear, iday, uthr
+    use wei05sc, only: cvt2md
+    implicit none
+    integer :: imo, ida, ihour, imin, isec
+    real :: val
+
+    if (len_trim(srcindices_imf_file) == 0) return
+
+    call cvt2md(6, iyear, iday, imo, ida)
+    ihour = int(uthr)
+    imin  = int((uthr - real(ihour)) * 60.0)
+    isec  = 0
+    call set_time(iyear, imo, ida, ihour, imin, isec)
+
+    if (get_nValues('imfby') > 0) then
+      call get_index('imfby', val);  byimf = val
+    endif
+    if (get_nValues('imfbz') > 0) then
+      call get_index('imfbz', val);  bzimf = val
+    endif
+    if (get_nValues('swvmag') > 0) then
+      call get_index('swvmag', val); swvel = val
+    endif
+    if (get_nValues('swn') > 0) then
+      call get_index('swn', val);    swden = val
+    endif
+  end subroutine sync_srcindices_imf
+
   ! Set all indices on ie before each timestep. Owns time-setting for
   ! both Electrodynamics (ie%time_ymdhms) and srcIndices (set_time).
   ! Falls back to namelist values when no index file is loaded.
