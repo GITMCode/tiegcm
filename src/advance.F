@@ -618,8 +618,8 @@
       call timer(time0_dynamics,time1_dynamics,'DYNAMICS',1,0)
       if (debug) write(6,"('advance after dynamics: istep=',i4)") istep
       call aurora_compute_hp(lat0,lat1,lon0,lon1)
-      if (mytid==0) write(6,"('aurora hpower_actual (GW): NH=',f8.2,
-     |  ' SH=',f8.2)") hpow_nh,hpow_sh
+      if (debug) write(6,"('aurora hpower_actual (GW): input=',f8.2,
+     |  ' NH=',f8.2,' SH=',f8.2)") power, hpow_nh,hpow_sh
       if (timing%level >= 2.and.time2print(nstep,istep))
      |  write(6,"('Time in DYNAMICS =     ',f12.2,
      |    ' Advance: step ',i5)") time1_dynamics,istep

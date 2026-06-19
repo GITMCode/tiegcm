@@ -53,7 +53,7 @@
  SECH_NBYTE  = 4                  ! bytes per float in secondary histories (4 or 8)
  SECFLDS = 'TN' 'UN' 'VN' 'WN' 'O2' 'O1' 'N2' 'NO' 'N4S' 'HE' 'NE'
            'TE' 'TI' 'TEC' 'O2P' 'OP' 'POTEN' 'UI_ExB' 'VI_ExB'
-           'WI_ExB' 'DEN' 'QJOULE' 'HMF2' 'NMF2' 'Z' 'ZG'
+           'WI_ExB' 'DEN' 'QJOULE' 'HMF2' 'NMF2' 'Z' 'ZG' 'EFLUX_TOT'
 
 ! -----------------------------------------------------------------------
 ! Lower boundary forcing (GSWM tidal files)

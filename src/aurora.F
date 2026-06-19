@@ -185,7 +185,8 @@
      |  flux, flux2, flux3, ! particle flux
      |  drizl,cusp,         ! polar drizzle and cusp
      |  qteaur,             ! for electron temperature
-     |  eflux,eflux2,eflux3 ! energy flux
+     |  eflux,eflux2,eflux3, ! energy flux
+     |  eflux_sum         ! Sum of eflux from all precip types
 !
 ! aureff = vertical profile for auroral heating efficiency (used by qjion)
 ! 
@@ -461,27 +462,34 @@
       use mpi
       use mpi_module,only: TIEGCM_WORLD
       use params_module,only: glat,nlon,dlat,dlon
+      use addfld_module,only: addfld
       use cons_module,only: re,dtr
       integer,intent(in) :: lat0_in,lat1_in,lon0_in,lon1_in
       integer :: lat,i,ier
-      real :: area,eflux_total,hp_local(2),hp_global(2)
+      real :: area,hp_local(2),hp_global(2)
+
       hp_local = 0.
       do lat=lat0_in,lat1_in
         area = re**2*cos(glat(lat)*dtr)*dlat*dtr*dlon*dtr
         do i=3,nlon+2 ! real longitudes only; skip ghost cells at 1,2 and nlon+3,nlon+4
-          eflux_total = eflux(i,lat) + eflux2(i,lat)
-     |      + ec*cusp(i,lat) + ed*drizl(i,lat)
+          eflux_sum(i,lat) = eflux(i,lat)+eflux2(i,lat)
+     |                       +ec*cusp(i,lat)+ed*drizl(i,lat)
           if (glat(lat) >= 0.) then
-            hp_local(2) = hp_local(2)+eflux_total*area
+            hp_local(2)   = hp_local(2)+eflux_sum(i,lat)*area
           else
-            hp_local(1) = hp_local(1)+eflux_total*area
+            hp_local(1)   = hp_local(1)+eflux_sum(i,lat)*area
           endif
         enddo
       enddo
-      call MPI_Allreduce(hp_local,hp_global,2,MPI_REAL,
+      call MPI_Allreduce(hp_local,hp_global,2,MPI_DOUBLE_PRECISION,
      |  MPI_SUM,TIEGCM_WORLD,ier)
       hpow_sh = hp_global(1)*1.e-16 ! ergs/s -> GW (1 GW = 1e16 ergs/s)
       hpow_nh = hp_global(2)*1.e-16
+
+      call addfld('EFLUX_TOT','Sum of Auroral energy flux','ergs/cm2/s',
+     |            eflux_sum(lon0_in:lon1_in,lat0_in:lat1_in),
+     |            'lon',lon0_in,lon1_in,'lat',lat0_in,lat1_in,0)
+
       end subroutine aurora_compute_hp
 !-----------------------------------------------------------------------
       subroutine aurora(o2,o1,he,n2,xnmbar,scht,
