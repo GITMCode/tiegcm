@@ -97,6 +97,7 @@
       integer :: i,j,itmp,ier,iprint,month,day,modelsec,ifld,k
       integer :: cmodeltime(4) !MAGE coupling time
       integer :: eta_secs,eta_h,eta_m,eta_s
+      real :: elapsed_total
       real :: fmin,fmax,delta,fac1,fac2
       integer(kind=8) :: nsecs ! current model time in seconds,
                                ! including model day
@@ -139,6 +140,7 @@
 !
 ! Init timestep index, modeltime, and nsecs:
       istep = 0
+      elapsed_total = 0.
       modeltime = pristart(:,1)
       call modeltime_to_nsecs(modeltime,nsecs) ! sets nsecs, includes day
       timing_type = 'sys'
@@ -419,15 +421,15 @@
         if (progress_report == 1) then
           if (mytid == 0) then
             if (istep > 1) then
-              eta_secs = int(secs_per_step * (nstep - istep))
+              eta_secs = int((elapsed_total / istep) * (nstep - istep))
               eta_h = eta_secs / 3600
               eta_m = mod(eta_secs, 3600) / 60
               eta_s = mod(eta_secs, 60)
-              write(6,"('Step ',i6,' of ',i6,' mtime=',4i3,
-     |          ' wall=',f5.1,'s  ETA ',i2,'h',i2.2,'m',i2.2,'s')")
+              write(6,"('Step ',i8,' of ',i8,' mtime=',4i3,
+     |          '   s/step=',f7.3,'s  ETA ',i4,'h',i2.2,'m',i2.2,'s')")
      |          istep,nstep,modeltime,secs_per_step,eta_h,eta_m,eta_s
             else
-              write(6,"('Step ',i6,' of ',i6,' mtime=',4i3)")
+              write(6,"('Step ',i8,' of ',i8,' mtime=',4i3)")
      |          istep,nstep,modeltime
             endif
             if (len_trim(gpi_ncfile) > 0)
@@ -847,6 +849,7 @@
      |    f12.2,' Advance: step ',i5)") time1_step,istep
       endif
       secs_per_step = time1_step
+      elapsed_total = elapsed_total + time1_step
 !
 ! Return for next time step:
       if (istep < nstep) then
