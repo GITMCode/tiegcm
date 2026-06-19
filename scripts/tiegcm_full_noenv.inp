@@ -260,4 +260,10 @@
  ENFORCE_N2 = .false.        ! correct N2 altitude profile to maintain consistency
  DUFF = .false.              ! use alternate reaction rate for N(2D)+O2->NO+O
 
+! -----------------------------------------------------------------------
+! Progress reporting
+! -----------------------------------------------------------------------
+! PROGRESS_REPORT = 0   ! 0 (default): all MPI ranks print per-step info
+ PROGRESS_REPORT = 1   ! 1: rank-0 only, with wall time and ETA
+
 /

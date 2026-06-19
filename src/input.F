@@ -61,7 +61,8 @@
      |  ntask_maglat,    ! number of tasks in mag latitude  dimension (not namelist)
      |  ntask_maglon,    ! number of tasks in mag longitude dimension (not namelist)
      |  calc_helium,     ! calculate helium if calc_helium=1, otherwise set he=0.
-     |  electron_heating
+     |  electron_heating,
+     |  progress_report   ! 0=all-rank stdout (default), 1=rank-0 only with ETA
       real(rp) ::
      |  tide(10),        ! semidiurnal tide amplitudes and phases
      |  tide2(2),        ! diurnal tide amplitude and phase
@@ -225,7 +226,8 @@
      |  nudge_sponge,nudge_delta,nudge_power,nudge_alpha,
      |  opdiffcap,opdiffrate,opdifflev,opfloor,oprate,oplev,oplatwidth,
      |  te_cap,ti_cap,
-     |  wei05sc_ncfile
+     |  wei05sc_ncfile,
+     |  progress_report
 !
 ! List of fields that are always written to secondary histories:
       character(len=16) :: secflds_mandatory(6) =
@@ -328,6 +330,7 @@
       dynamo  = ispval
       current_pg = 1     ! on by default
       current_kq = 0     ! off by default
+      progress_report = 0 ! default: existing all-rank output
       tide(:) = spval
       tide2(:)= spval
       tide3m3(:) = spval
@@ -780,6 +783,12 @@
         eddy_dif = 0
       else
         eddy_dif = 1
+      endif
+!
+      if (progress_report < 0 .or. progress_report > 1) then
+        write(6,"('>>> Input: invalid PROGRESS_REPORT=',i4,
+     |    '; resetting to 0')") progress_report
+        progress_report = 0
       endif
 !
 ! Set iamie flag to 1 if user has provided either amiesh or amienh
@@ -1753,6 +1762,9 @@
       write(6,"('  tide2 (amplitude and phase of diurnal tide) =',
      |  /,4x,e8.1,f6.2)") tide2
       write(6,"('  aurora  = ',i2,' (0/1 flag for aurora)')") aurora
+      write(6,"('  progress_report = ',i2,
+     |  ' (0=all-rank stdout, 1=rank-0 only with ETA)')")
+     |   progress_report
       write(6,"('  colfac = ',f9.3,' (collision factor)')") colfac
       write(6,"('  joulefac = ',f9.3,' (joule heating factor)')") 
      |  joulefac

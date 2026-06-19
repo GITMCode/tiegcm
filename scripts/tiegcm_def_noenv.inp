@@ -52,4 +52,6 @@
 ! Required even when SAPS=.false. to avoid needing $TGCMDATA
  SUBAUR_DATA = 'tiegcmdata/subaur_data.nc'
 
+ PROGRESS_REPORT = 1   ! rank-0 only with wall time and ETA (0=default all-rank)
+
 /

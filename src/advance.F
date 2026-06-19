@@ -27,7 +27,7 @@
      |  calendar_advance,gpi_ncfile,potential_model,wei05sc_ncfile,
      |  imf_ncfile,current_pg,current_kq,iamie,amie_ibkg,
      |  start_day,nudge_lbc,nudge_f4d,nudge_alpha,
-     |  doEclipse,eclipse_list
+     |  doEclipse,eclipse_list,progress_report
       use input_module,only: 
      |  power  ,power_time  ,ntimes_power, rd_power,
      |  ctpoten,ctpoten_time,ntimes_ctpoten, rd_ctpoten,
@@ -96,6 +96,7 @@
 ! Local:
       integer :: i,j,itmp,ier,iprint,month,day,modelsec,ifld,k
       integer :: cmodeltime(4) !MAGE coupling time
+      integer :: eta_secs,eta_h,eta_m,eta_s
       real :: fmin,fmax,delta,fac1,fac2
       integer(kind=8) :: nsecs ! current model time in seconds,
                                ! including model day
@@ -415,27 +416,46 @@
 !
 ! Report to stdout:
       if (time2print(nstep,istep)) then
-        if (istep > 1) then
-          write(6,"('Step ',i8,' of ',i8,' mtime=',4i3,
-     |      ' secs/step (',a,') =',f6.2)") istep,nstep,modeltime,
-     |      timing_type,secs_per_step
+        if (progress_report == 1) then
+          if (mytid == 0) then
+            if (istep > 1) then
+              eta_secs = int(secs_per_step * (nstep - istep))
+              eta_h = eta_secs / 3600
+              eta_m = mod(eta_secs, 3600) / 60
+              eta_s = mod(eta_secs, 60)
+              write(6,"('Step ',i6,' of ',i6,' mtime=',4i3,
+     |          ' wall=',f5.1,'s  ETA ',i2,'h',i2.2,'m',i2.2,'s')")
+     |          istep,nstep,modeltime,secs_per_step,eta_h,eta_m,eta_s
+            else
+              write(6,"('Step ',i6,' of ',i6,' mtime=',4i3)")
+     |          istep,nstep,modeltime
+            endif
+            if (len_trim(gpi_ncfile) > 0)
+     |        write(6,"('  GPI: power=',f8.3,' ctpoten=',f8.3,
+     |          ' f107=',f8.3,' f107a=',f8.3)")
+     |          power,ctpoten,f107,f107a
+            if (len_trim(imf_ncfile) > 0)
+     |        write(6,"('  IMF: bx=',f7.3,' by=',f7.3,' bz=',f7.3,
+     |          ' swvel=',f7.1,' swden=',f6.2)")
+     |          bximf,byimf,bzimf,swvel,swden
+          endif
         else
-          write(6,"('Step ',i8,' of ',i8,' mtime=',4i3)")
-     |      istep,nstep,modeltime
-        endif
-!
-! GPI data run:
-        if (len_trim(gpi_ncfile) > 0) then
-          write(6,"('GPI run: mtime=',4i3,' power=',f8.3,' ctpoten=',
-     |      f8.3,' f107=',f8.3,' f107a=',f8.3)")modeltime,
-     |      power,ctpoten,f107,f107a
-        endif
-!
-! Weimer/IMF/OMNI data run:
-        if (len_trim(imf_ncfile) > 0) then
-          write(6,"('IMF run: mtime=',4i3,' bx=',f8.3,' by=',f8.3,
-     |      ' bz=',f8.3,' swvel=',f8.3,' swden=',f8.3)")
-     |      modeltime,bximf,byimf,bzimf,swvel,swden
+          if (istep > 1) then
+            write(6,"('Step ',i8,' of ',i8,' mtime=',4i3,
+     |        ' secs/step (',a,') =',f6.2)") istep,nstep,modeltime,
+     |        timing_type,secs_per_step
+          else
+            write(6,"('Step ',i8,' of ',i8,' mtime=',4i3)")
+     |        istep,nstep,modeltime
+          endif
+          if (len_trim(gpi_ncfile) > 0)
+     |      write(6,"('GPI run: mtime=',4i3,' power=',f8.3,
+     |        ' ctpoten=',f8.3,' f107=',f8.3,' f107a=',f8.3)")
+     |        modeltime,power,ctpoten,f107,f107a
+          if (len_trim(imf_ncfile) > 0)
+     |      write(6,"('IMF run: mtime=',4i3,' bx=',f8.3,' by=',f8.3,
+     |        ' bz=',f8.3,' swvel=',f8.3,' swden=',f8.3)")
+     |        modeltime,bximf,byimf,bzimf,swvel,swden
         endif
       endif ! time2print
 !

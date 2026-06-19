@@ -5,6 +5,14 @@ potentials are <3% different.
 
 ## Summary of changes
 
+### Runtime output changes
+
+- Add `PROGRESS_REPORT` namelist integer (`0`/`1`, default `0`).
+  When set to `1`, per-timestep stdout is suppressed on all but MPI rank 0 and
+  includes wall-clock seconds per step and an HH:MM:SS ETA to run completion.
+  Default `0` preserves existing all-rank output exactly.
+  Enabled by default in `tiegcm_def_noenv.inp` and `tiegcm_full_noenv.inp`.
+
 ### Configuration usability changes:
 
 - `tiegcmrun.py` now has an entrypoint at the root of the repository. The file is
