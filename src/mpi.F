@@ -160,16 +160,29 @@
       logical :: is_prime
       integer :: ier,i,fullrank,tmpComm,color
       logical :: doVoltCommSkip = .false.
-      character(len=8) :: pmi_val
-      integer :: pmi_status
+      character(len=64) :: pmi_val
+      integer :: pmi_status, pmi_st2, pmi_st3, pmi_st4
 !
-! MPICH/Hydra sets PMI_FD when launched via mpirun/mpiexec.
-! Without it MPI_Init hangs and cannot be interrupted with Ctrl+C.
-      call get_environment_variable('PMI_FD', pmi_val,
+! Guard against running without MPI launcher (MPI_Init hangs, uninterruptible).
+! Check env vars set by the common launchers:
+!   PMI_FD    -- MPICH/Hydra (mpirun/mpiexec)
+!   PMI_RANK  -- most MPICH-derived stacks including Cray MPICH
+!   SLURM_PROCID -- any Slurm launcher (srun)
+!   ALPS_APP_ID  -- Cray ALPS (aprun)
+      call get_environment_variable('PMI_FD',       pmi_val,
      |  status=pmi_status)
-      if (pmi_status /= 0) then
-        write(6,"('>>> tiegcm must be launched via mpirun')")
-        write(6,"('>>> or mpiexec, e.g.: mpirun -np 1 ./tiegcm.exe')")
+      call get_environment_variable('PMI_RANK',     pmi_val,
+     |  status=pmi_st2)
+      call get_environment_variable('SLURM_PROCID', pmi_val,
+     |  status=pmi_st3)
+      call get_environment_variable('ALPS_APP_ID',  pmi_val,
+     |  status=pmi_st4)
+      if (pmi_status /= 0 .and. pmi_st2 /= 0 .and.
+     |    pmi_st3 /= 0 .and. pmi_st4 /= 0) then
+        write(6,"('>>> tiegcm must be launched via an MPI launcher')")
+        write(6,"('>>> e.g.: mpirun -np 1 ./tiegcm.exe')")
+        write(6,"('>>>       aprun  -n 1 ./tiegcm.exe')")
+        write(6,"('>>>       srun   -n 1 ./tiegcm.exe')")
         stop 1
       endif
 !
