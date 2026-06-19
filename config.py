@@ -167,7 +167,7 @@ def _write_make_env(builddir, make_fragment, srcdir, exe_path,
         f.write(content)
 
 
-def _write_root_makefile(tiegcmhome, tiegcmdata, gswm_res, havemile=False):
+def _write_root_makefile(tiegcmhome, tiegcmdata, gswm_res, step, havemile=False):
     template_path = os.path.join(tiegcmhome, "scripts", "Makefile.tmpl")
     with open(template_path, "r") as f:
         template = f.read()
@@ -184,6 +184,7 @@ def _write_root_makefile(tiegcmhome, tiegcmdata, gswm_res, havemile=False):
         tiegcmhome=tiegcmhome,
         tiegcmdata=tiegcmdata,
         gswm_res=gswm_res,
+        step=step,
         ie_data_line=ie_data_line,
     )
 
@@ -319,11 +320,11 @@ def configure(args):
         haveindices, _TIEGCMHOME
     )
     gswm_res = f"{horires}d"
-    _write_root_makefile(_TIEGCMHOME, tiegcmdata, gswm_res, havemile=havemile)
+    _write_root_makefile(_TIEGCMHOME, tiegcmdata, gswm_res, res["step"], havemile=havemile)
 
     print("Configured TIEGCM:")
     print(f"  Compiler   : {compiler}  ({make_fragment})")
-    print(f"  Resolution : {horires} deg horizontal / {res['vertres']} deg vertical")
+    print(f"  Resolution : {horires} deg horizontal / {res['vertres']} scale heights vertical")
     print(f"  ZITOP      : {zitop}  (log-pressure level)")
     if tiegcmdata_found:
         print(f"  TIEGCMDATA : {tiegcmdata}")
@@ -371,7 +372,7 @@ def show_status():
 
     print("Current TIEGCM configuration:")
     print(f"  Compiler   : {env.get('MAKE_MACHINE', '?')}")
-    print(f"  Resolution : {defs.get('DLAT', '?')} deg horizontal / {defs.get('DLEV', '?')} deg vertical")
+    print(f"  Resolution : {defs.get('DLAT', '?')} deg horizontal / {defs.get('DLEV', '?')} scale heights vertical")
     print(f"  ZITOP      : {defs.get('ZITOP', '?')}  (log-pressure level)")
     print(f"  Executable : {exe}" + ("  (built)" if os.path.isfile(exe) else "  (not yet built)"))
     print(f"  Debug={env.get('DEBUG','?')}  Coupling={env.get('COUPLING','?')}  HIDRA={env.get('HIDRA','?')}  HAVEMILE={env.get('HAVEMILE','?')}")

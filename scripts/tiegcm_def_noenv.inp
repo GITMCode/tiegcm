@@ -1,7 +1,8 @@
 &tgcm_input
 
-! Minimal TIEGCM namelist -- Heelis, constant quiet-time indices, no $TGCMDATA needed.
-! All paths are relative to the run directory (symlinks to tiegcmdata/ must exist).
+! Minimal TIEGCM namelist -- Heelis, constant quiet-time indices.
+! Template: 'make rundir' substitutes tiegcmdata/ -> absolute TIEGCMDATA path,
+!   2.5d -> configured resolution, and he_coefs_sres -> correct suffix.
 ! See tiegcm_full_noenv.inp for all options with documentation.
 
  LABEL          = 'tiegcm'
@@ -29,7 +30,7 @@
            'TE' 'TI' 'TEC' 'O2P' 'OP' 'POTEN' 'UI_ExB' 'VI_ExB'
            'WI_ExB' 'DEN' 'QJOULE' 'HMF2' 'NMF2' 'Z' 'ZG'
 
-! Tidal boundary -- filenames are resolution-specific (2.5 deg shown)
+! Tidal boundary -- filenames are resolution-specific (2.5d template; make rundir substitutes)
  GSWM_MI_DI_NCFILE  = 'tiegcmdata/boundary_files/GSWM/gswm_diurn_2.5d_99km.nc'
  GSWM_MI_SDI_NCFILE = 'tiegcmdata/boundary_files/GSWM/gswm_semi_2.5d_99km.nc'
  GSWM_NM_DI_NCFILE  = 'tiegcmdata/boundary_files/GSWM/gswm_nonmig_diurn_2.5d_99km.nc'
@@ -41,11 +42,12 @@
 
  POTENTIAL_MODEL = 'HEELIS'
  AURORA_MODEL    = 'emery'
- POWER   = 18.
- CTPOTEN = 30.
 
+! Indices -- scalars; use GPI_NCFILE for time-varying F107/Kp (Kp maps to POWER/CTPOTEN)
  F107  = 70.
  F107A = 70.
+ POWER   = 18.    ! hemispheric power (GW); drives emery aurora. Use POWER_TIME to vary.
+ CTPOTEN = 30.    ! cross-polar cap potential (kV); Heelis only. Use CTPOTEN_TIME to vary.
 
 ! Required even when SAPS=.false. to avoid needing $TGCMDATA
  SUBAUR_DATA = 'tiegcmdata/subaur_data.nc'

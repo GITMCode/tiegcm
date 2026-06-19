@@ -4,6 +4,9 @@
 TIEGCMHOME = {tiegcmhome}
 TIEGCMDATA ?= {tiegcmdata}
 GSWM_RES   = {gswm_res}
+STEP       = {step}
+# sres=2.5/5 deg, dres=1.25/0.625 deg
+HE_SUFFIX  := $(if $(filter 1.25d 0.625d,$(GSWM_RES)),dres,sres)
 NAME      ?= run
 
 .PHONY: all clean rundir
@@ -24,17 +27,22 @@ rundir:
 	mkdir -p $(NAME)
 	@if [ -f $(TIEGCMHOME)/build/tiegcm.exe ]; then \
 		ln -sfn $(TIEGCMHOME)/build/tiegcm.exe $(NAME)/tiegcm.exe; \
-		ln -sfn $(TIEGCMDATA) $(NAME); \
+		ln -sfn $(TIEGCMDATA) $(NAME)/tiegcmdata; \
 	else \
 		echo "  Note: tiegcm.exe not yet built — run 'make' first"; \
 	fi
-	cp $(TIEGCMHOME)/scripts/tiegcm_def_noenv.inp $(NAME)/$(NAME).inp
-	ln -sfn $(TIEGCMDATA)/he_coefs_sres.nc        $(NAME)/
-	ln -sfn $(TIEGCMDATA)/he_coefs_dres.nc        $(NAME)/
-	ln -sfn $(TIEGCMDATA)/boundary_files/GSWM/gswm_diurn_$(GSWM_RES)_99km.nc        $(NAME)/
-	ln -sfn $(TIEGCMDATA)/boundary_files/GSWM/gswm_semi_$(GSWM_RES)_99km.nc         $(NAME)/
-	ln -sfn $(TIEGCMDATA)/boundary_files/GSWM/gswm_nonmig_diurn_$(GSWM_RES)_99km.nc $(NAME)/
-	ln -sfn $(TIEGCMDATA)/boundary_files/GSWM/gswm_nonmig_semi_$(GSWM_RES)_99km.nc  $(NAME)/
+	sed \
+		-e "s|tiegcmdata/|$(TIEGCMDATA)/|g" \
+		-e "s|_2\.5d_|_$(GSWM_RES)_|g" \
+		-e "s|he_coefs_sres|he_coefs_$(HE_SUFFIX)|g" \
+		-e "/^ STEP /s/= [0-9]*/= $(STEP)/" \
+		$(TIEGCMHOME)/scripts/tiegcm_def_noenv.inp > $(NAME)/$(NAME).inp
+	sed \
+		-e "s|tiegcmdata/|$(TIEGCMDATA)/|g" \
+		-e "s|_2\.5d_|_$(GSWM_RES)_|g" \
+		-e "s|he_coefs_sres|he_coefs_$(HE_SUFFIX)|g" \
+		-e "/^ STEP /s/= [0-9]*/= $(STEP)/" \
+		$(TIEGCMHOME)/scripts/tiegcm_full_noenv.inp > $(NAME)/$(NAME)_full.inp
 {ie_data_line}
 
 	@echo ""

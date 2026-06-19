@@ -1,7 +1,8 @@
 &tgcm_input
 
 ! Full TIEGCM namelist reference -- every namelist option with documentation.
-! No $TGCMDATA needed; all paths are relative to the run directory.
+! Template: 'make rundir' substitutes tiegcmdata/ -> absolute TIEGCMDATA path,
+!   2.5d -> configured resolution, he_coefs_sres -> correct suffix, and STEP.
 ! Active settings reflect a quiet-time Heelis run at 2.5-degree resolution.
 ! Commented-out lines show alternatives, optional parameters, or off-by-default features.
 
@@ -12,6 +13,19 @@
  START_YEAR     = 2002
  START_DAY      = 80
  CALENDAR_ADVANCE = 1             ! 1 = advance calendar; 0 = perpetual day
+
+! -----------------------------------------------------------------------
+! MPI decomposition (usually set automatically; override only if needed)
+! -----------------------------------------------------------------------
+! NTASK_LON = 4   ! MPI tasks in longitude dimension
+! NTASK_LAT = 4   ! MPI tasks in latitude dimension
+
+! -----------------------------------------------------------------------
+! Timestepping
+! -----------------------------------------------------------------------
+ STEP      = 30                   ! dynamical timestep (seconds); resolution-dependent
+                                  !   5 deg: 60s  2.5 deg: 30s  1.25 deg: 10s
+ NSTEP_SUB = 10                   ! O+ sub-cycling steps per STEP
 
 ! -----------------------------------------------------------------------
 ! Restart / source file
@@ -25,8 +39,6 @@
  PRISTART  = 80 0 0 0             ! day hh mm ss to start writing
  PRISTOP   = 81 0 0 0             ! day hh mm ss to stop
  PRIHIST   = 1 0 0 0              ! output interval
- STEP      = 30                   ! dynamical timestep (seconds)
- NSTEP_SUB = 10                   ! electrodynamics sub-steps per STEP
  OUTPUT    = 'tiegcm_prim_001.nc'
  MXHIST_PRIM = 10                 ! max histories per output file before rolling over
 
@@ -44,14 +56,8 @@
            'WI_ExB' 'DEN' 'QJOULE' 'HMF2' 'NMF2' 'Z' 'ZG'
 
 ! -----------------------------------------------------------------------
-! MPI decomposition (usually set automatically; override only if needed)
-! -----------------------------------------------------------------------
-! NTASK_LON = 4   ! MPI tasks in longitude dimension
-! NTASK_LAT = 4   ! MPI tasks in latitude dimension
-
-! -----------------------------------------------------------------------
-! Tidal boundary forcing (GSWM)
-! Filenames are resolution-specific: 2.5d, 1.25d variants exist.
+! Lower boundary forcing (GSWM tidal files)
+! Filenames are resolution-specific (2.5d template; make rundir substitutes).
 ! -----------------------------------------------------------------------
  GSWM_MI_DI_NCFILE  = 'tiegcmdata/boundary_files/GSWM/gswm_diurn_2.5d_99km.nc'
  GSWM_MI_SDI_NCFILE = 'tiegcmdata/boundary_files/GSWM/gswm_semi_2.5d_99km.nc'
@@ -63,15 +69,15 @@
 ! TIDE2(2)   = 0. 0.                             ! diurnal: amplitude, phase
 ! TIDE3M3(2) = 0. 0.                             ! 2-day wave: amplitude, phase
 
-! SABER_NCFILE  = '/path/to/saber_data.nc'  ! SABER T,Z observations for LBC
-! TIDI_NCFILE   = '/path/to/tidi_data.nc'   ! TIDI wind observations for LBC
-! BGRDDATA_NCFILE = '/path/to/bgrd.nc'      ! background climatology data
-! CTMT_NCFILE   = '/path/to/ctmt.nc'        ! CTMT tidal climatology for LBC
+! Observational / climatological LBC overrides:
+! SABER_NCFILE    = '/path/to/saber_data.nc'  ! SABER T,Z observations
+! TIDI_NCFILE     = '/path/to/tidi_data.nc'   ! TIDI wind observations
+! BGRDDATA_NCFILE = '/path/to/bgrd.nc'        ! background climatology
+! CTMT_NCFILE     = '/path/to/ctmt.nc'        ! CTMT tidal climatology
 
 ! -----------------------------------------------------------------------
 ! Helium upper boundary
-! sres = 2.5 deg (36 lats), dres = 1.25 deg (72 lats); must match horires.
-! If omitted, code auto-selects via $TGCMDATA -- set explicitly here.
+! sres = 2.5/5 deg, dres = 1.25/0.625 deg; must match horires.
 ! -----------------------------------------------------------------------
  HE_COEFS_NCFILE = 'tiegcmdata/he_coefs_sres.nc'
 ! HE_COEFS_NCFILE = 'tiegcmdata/he_coefs_dres.nc'  ! for 1.25-deg runs
@@ -83,6 +89,8 @@
  DYNAMO   = 1                ! 1 = calculate ionospheric dynamo (default)
  EDDY_DIF = 0                ! 0 = constant eddy diffusion (default)
                              ! 1 = DOY-dependent eddy diffusion (difk, dift, xmue)
+ CURRENT_PG = 1              ! add plasma pressure+gravity current to RHS (default on)
+ CURRENT_KQ = 0              ! calculate height-integrated current density (default off)
 
 ! -----------------------------------------------------------------------
 ! Electric potential model
@@ -95,6 +103,11 @@
 
 ! Weimer coefficient file (required for WEIMER05; default uses $TGCMDATA)
 ! WEI05SC_NCFILE = 'tiegcmdata/wei05sc.nc'
+
+! AMIE input files (required when POTENTIAL_MODEL = 'AMIE'):
+! AMIENH   = '/path/to/amie_north.asc'  ! NH AMIE text data file
+! AMIESH   = '/path/to/amie_south.asc'  ! SH AMIE text data file
+! AMIE_IBKG = 0  ! 0=real-time data, 1=first record only, 2=24-hr average
 
 ! -----------------------------------------------------------------------
 ! Auroral model
@@ -116,11 +129,9 @@
  USE_DRIZZLE = .true.        ! polar drizzle precipitation
  USE_SOFT    = .true.        ! soft / high-altitude low-energy electrons (alfa2)
 
-! -----------------------------------------------------------------------
-! Heelis driving parameters (ignored when POTENTIAL_MODEL != HEELIS)
-! -----------------------------------------------------------------------
- POWER   = 18.               ! hemispheric power (GW)
- CTPOTEN = 30.               ! cross-tail potential (kV)
+! AMIE binary files for Electrodynamics library (AURORA_MODEL = 'amie'):
+! AMIE_IE_NORTH = '/path/to/amie_north.bin'
+! AMIE_IE_SOUTH = '/path/to/amie_south.bin'
 
 ! -----------------------------------------------------------------------
 ! Heating and collision scaling factors
@@ -136,40 +147,53 @@
  TI_CAP = 10000.
 
 ! -----------------------------------------------------------------------
-! Additional current diagnostics
-! -----------------------------------------------------------------------
- CURRENT_PG = 1              ! add plasma pressure+gravity current to RHS (default on)
- CURRENT_KQ = 0              ! calculate height-integrated current density (default off)
-
-! -----------------------------------------------------------------------
 ! Solar / geomagnetic indices
 !
-! Option A: constant scalars (shown below -- quiet-time solar min)
-! Option B: time-varying from a GPI file (provides f10.7, Kp, power)
-!   GPI_NCFILE = 'tiegcmdata/gpi_1950001-2100365.nc'
-! Option C: time-varying IMF/SW from file (drives Weimer directly)
-!   IMF_NCFILE = '/path/to/imf_data.nc'
-! Option D: srcIndices files (AE, HPI, IMF/SW -- MILE branch)
-!   SRCINDICES_IMF_FILE = '/path/to/imf.nc'
-!   SRCINDICES_AE_FILE  = '/path/to/ae.nc'
-!   SRCINDICES_HPI_FILE = '/path/to/hpi.nc'
+! All of these can be supplied as:
+!   (A) Scalar constants (shown below; held fixed for the entire run)
+!   (B) _TIME arrays     (explicit time series; see commented block below)
+!   (C) GPI_NCFILE       (F107, Kp; Kp is mapped internally to POWER & CTPOTEN)
+!   (D) IMF_NCFILE       (BYIMF, BZIMF, SWVEL, SWDEN for Weimer)
+!   (E) srcIndices files (MILE/-DHAVEMILE; AE, HPI, IMF/SW from index files)
 !
-! INDICES_INTERP = 1         ! 1 = interpolate time-dependent indices (default)
+! Options C-E override the corresponding scalars when provided.
+! INDICES_INTERP = 1         ! interpolate time-dependent indices (default)
 ! -----------------------------------------------------------------------
- F107  = 70.
- F107A = 70.
 
-! Weimer/Heelis IMF/SW scalars (used when IMF_NCFILE is not set):
+! -- Solar flux --
+ F107  = 70.                 ! 10.7 cm solar flux (sfu). Quiet: ~70; active: 150+
+ F107A = 70.                 ! 81-day mean F107
+! SEE_NCFILE = '/path/to/see_data.nc'   ! replaces F107/F107A if provided
+
+! -- Aurora driving --
+! POWER drives the Roble-Ridley (emery) aurora pattern.
+! When GPI_NCFILE is used, Kp is mapped to POWER automatically.
+! Ignored when AURORA_MODEL != 'emery' (MILE aurora models use IMF/SW directly).
+ POWER   = 18.               ! hemispheric power (GW). Quiet: ~16; storm: 50-200+
+! GPI_NCFILE = 'tiegcmdata/gpi_1950001-2100365.nc'  ! provides F107 + Kp -> POWER
+
+! -- Heelis convection driving (ignored when POTENTIAL_MODEL != 'HEELIS') --
+! When GPI_NCFILE is used, Kp is also mapped to CTPOTEN automatically.
+ CTPOTEN = 30.               ! cross-polar cap potential (kV). Quiet: ~30; storm: 100+
+
+! -- IMF / solar wind --
+! Used by Weimer for potential and by Heelis for By-driven asymmetry.
+! Override with IMF_NCFILE (option D) or SRCINDICES_IMF_FILE (option E).
  BXIMF = 0.0
  BYIMF = 5.0
  BZIMF = -5.0
  SWVEL = 400.
  SWDEN = 4.0
- KP    = 1.0                 ! Kp index (used by some aurora parameterizations)
- AL    = -100.               ! AL index in nT (used by Weimer 2001)
+ KP    = 1.0                 ! Kp index (aurora parameterizations)
+ AL    = -100.               ! AL index in nT (Weimer 2001 only)
+! IMF_NCFILE = '/path/to/imf_data.nc'   ! time-varying BYIMF/BZIMF/SWVEL/SWDEN
 
-! Time-varying index arrays -- each entry is: day hh mm ss value
-! (uncomment and populate to override scalar values above)
+! -- srcIndices files (MILE branch / -DHAVEMILE) --
+! SRCINDICES_IMF_FILE = '/path/to/imf.nc'
+! SRCINDICES_AE_FILE  = '/path/to/ae.nc'
+! SRCINDICES_HPI_FILE = '/path/to/hpi.nc'
+
+! -- Time-varying arrays (option B): day hh mm ss value  [repeating pairs] --
 ! F107_TIME    = 80 0 0 0 70.   81 0 0 0 75.
 ! F107A_TIME   = 80 0 0 0 70.   81 0 0 0 75.
 ! POWER_TIME   = 80 0 0 0 18.   81 0 0 0 20.
@@ -181,20 +205,6 @@
 ! SWDEN_TIME   = 80 0 0 0 4.
 ! KP_TIME      = 80 0 0 0 1.0
 ! AL_TIME      = 80 0 0 0 -100.
-
-! SEE solar flux data (replaces F107/F107A if provided):
-! SEE_NCFILE = '/path/to/see_data.nc'
-
-! -----------------------------------------------------------------------
-! AMIE (legacy text-file interface; for binary AMIE see MILE/Electrodynamics)
-! -----------------------------------------------------------------------
-! AMIENH   = '/path/to/amie_north.asc'  ! NH AMIE text data file
-! AMIESH   = '/path/to/amie_south.asc'  ! SH AMIE text data file
-! AMIE_IBKG = 0  ! 0=real-time data, 1=first record only, 2=24-hr average
-
-! AMIE binary files for Electrodynamics library (MILE branch):
-! AMIE_IE_NORTH = '/path/to/amie_north.bin'
-! AMIE_IE_SOUTH = '/path/to/amie_south.bin'
 
 ! -----------------------------------------------------------------------
 ! SAPS empirical model
