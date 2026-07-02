@@ -1,4 +1,4 @@
-#build and run directories
+# build and run directories
 build/
 stdout/
 exec/
@@ -6,6 +6,8 @@ hist/
 run*/
 /Makefile*
 tiegcmdata/
+ext/
+# ^^ This is where Electrodynamics and srcIndices go
 
 ## Compiled Object files
 *.slo
